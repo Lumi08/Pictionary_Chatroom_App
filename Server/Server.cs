@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Net;
 using System.Net.Sockets;
 using System.IO;
+using System.Threading;
 
 namespace Server
 {
@@ -13,6 +14,7 @@ namespace Server
 	{
 		//Locals
 		private TcpListener tcpListener;
+		private List<Thread> threads = new List<Thread>();
 
 		public Server(string ipAddress, int port)
 		{
@@ -24,10 +26,15 @@ namespace Server
 			tcpListener.Start();
 
 			PrintToConsoleAsLogMessage("Server Awaiting Client");
+			
+			while (true)
+			{
+				Socket clientSocket = tcpListener.AcceptSocket();
 
-			Socket clientSocket = tcpListener.AcceptSocket();
-			PrintToConsoleAsLogMessage("Client Connected");
-			ClientMethod(clientSocket);
+				PrintToConsoleAsLogMessage("Client Joined!");
+				threads.Add(new Thread(() => { ClientMethod(clientSocket); }));
+				threads.Last().Start();
+			}
 
 		}
 
