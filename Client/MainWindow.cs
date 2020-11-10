@@ -48,7 +48,7 @@ namespace Client
 				return;
 			}
 
-			UpdateChatTextBox(InputMessageTextBox.Text);
+			client.SendDataToServer(InputMessageTextBox.Text);
 		}
 	}
 }
