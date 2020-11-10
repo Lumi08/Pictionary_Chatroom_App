@@ -87,7 +87,7 @@ namespace Client
 			mainWindow.ShowDialog();
 		}
 
-		private void Close()
+		public void Close()
 		{
 			inApp = false;
 			tcpClient.Close();

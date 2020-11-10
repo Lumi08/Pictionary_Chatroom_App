@@ -66,8 +66,11 @@
 			this.Controls.Add(this.SendMessageButton);
 			this.Controls.Add(this.InputMessageTextBox);
 			this.Controls.Add(this.ChatTextBox);
+			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+			this.MaximizeBox = false;
 			this.Name = "MainWindow";
 			this.Text = "Form1";
+			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainWindow_FormClosing);
 			this.ResumeLayout(false);
 			this.PerformLayout();
 

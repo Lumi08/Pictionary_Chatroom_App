@@ -50,5 +50,10 @@ namespace Client
 
 			client.SendDataToServer(InputMessageTextBox.Text);
 		}
+
+		private void MainWindow_FormClosing(object sender, FormClosingEventArgs e)
+		{
+			client.Close();
+		}
 	}
 }
