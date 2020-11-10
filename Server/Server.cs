@@ -33,7 +33,7 @@ namespace Server
 				Socket clientSocket = tcpListener.AcceptSocket();
 				connectedClients.Add(new ConnectedClient(clientSocket));
 				PrintToConsoleAsLogMessage(connectedClients.Last().GetNickname() + " Joined the server!");
-				threads.Add(new Thread(() => { ClientMethod(clientSocket); }));
+				threads.Add(new Thread(() => { ClientMethod(connectedClients.Last()); }));
 				threads.Last().Start();
 			}
 
@@ -44,37 +44,42 @@ namespace Server
 			tcpListener.Stop();
 		}
 
-		private void ClientMethod(Socket socket)
+		private void ClientMethod(ConnectedClient connectedClient)
 		{
 			string recievedDataFromClientSocket;
-			
-			NetworkStream stream = new NetworkStream(socket);
-			StreamReader streamReader = new StreamReader(stream);
-			StreamWriter streamWriter = new StreamWriter(stream);
 
-			while((recievedDataFromClientSocket = streamReader.ReadLine()) != null)
+			while((recievedDataFromClientSocket = connectedClient.GetStreamReader().ReadLine()) != null)
 			{
-				string reply = ProcessDataSentFromClient(recievedDataFromClientSocket);
-				Console.WriteLine(reply);
-				streamWriter.WriteLine(reply);
-				streamWriter.Flush();
+				ProcessDataSentFromClient(recievedDataFromClientSocket, connectedClient);
 			}
 
+			connectedClient.CloseConnection();
 		}
 
-		private string ProcessDataSentFromClient(string data)
+		private void ProcessDataSentFromClient(string data, ConnectedClient client)
 		{
+			if(data.StartsWith("/client.disconnect"))
+			{
+				threads.RemoveAt(connectedClients.IndexOf(client));
+				connectedClients.Remove(client);
+				PrintToConsoleAsLogMessage(client.GetNickname() + " Left The Server. [" + client.GetSocket().RemoteEndPoint + "]");
+				BroadcastDataToAllClients("/server.message [Server] " + client.GetNickname() + " has left the chat!");
+				return;
+			}
+
 			if(data == "hi")
 			{
-				return "hello";
+				BroadcastDataToAllClients("hey");
 			}
+		}
 
-			if(data == "bye")
+		private void BroadcastDataToAllClients(string data)
+		{
+			foreach(ConnectedClient client in connectedClients)
 			{
-				return "goodbye";
+				client.GetStreamWriter().WriteLine(data);
+				client.GetStreamWriter().Flush();
 			}
-
-			return "I dont understand what youve inputed";
 		}
 
 		public void PrintToConsoleAsLogMessage(string x)

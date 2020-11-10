@@ -21,7 +21,7 @@ namespace Client
 		private StreamReader streamReader;
 		private StreamWriter streamWriter;
 
-		private bool inApp;
+		public bool inApp;
 
 		public Client(string ipAddress, int port)
 		{
@@ -34,6 +34,7 @@ namespace Client
 				streamWriter.Flush();
 
 				Thread formThread = new Thread(() => { ShowForm(mainWindow); });
+				inApp = true;
 				formThread.Start();
 				Run();
 				formThread.Join();
@@ -41,9 +42,7 @@ namespace Client
 		}
 
 		public void Run()
-		{
-			inApp = true;
-
+		{ 
 			while(inApp)
 			{
 				ProcessServerResponse();
@@ -70,9 +69,15 @@ namespace Client
 
 		public void ProcessServerResponse()
 		{
-			string data = streamReader.ReadLine();
+			try
+			{
+				string data = streamReader.ReadLine();
+				mainWindow.UpdateChatTextBox(data);
+			}
+			catch(Exception e)
+			{
 
-			mainWindow.UpdateChatTextBox(data);
+			}
 		}
 
 		public void SendDataToServer(string data)
@@ -89,6 +94,7 @@ namespace Client
 		public void Close()
 		{
 			inApp = false;
+			SendDataToServer("/client.disconnect");
 			tcpClient.Close();
 		}
 	}
