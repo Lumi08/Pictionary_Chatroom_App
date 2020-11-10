@@ -17,9 +17,9 @@ namespace Client
 
 		//Network
 		private TcpClient tcpClient;
-		private NetworkStream messageStream;
-		private StreamReader messageStreamReader;
-		private StreamWriter messageStreamWriter;
+		private NetworkStream stream;
+		private StreamReader streamReader;
+		private StreamWriter streamWriter;
 
 		private bool inApp;
 
@@ -30,6 +30,8 @@ namespace Client
 
 			if(ConnectToServer(ipAddress, port))
 			{
+				streamWriter.WriteLine("Ryan");
+				streamWriter.Flush();
 
 				Thread formThread = new Thread(() => { ShowForm(mainWindow); });
 				formThread.Start();
@@ -53,9 +55,9 @@ namespace Client
 			try
 			{
 				tcpClient.Connect(new IPEndPoint(IPAddress.Parse(ipAddress), port));
-				messageStream = tcpClient.GetStream();
-				messageStreamReader = new StreamReader(messageStream);
-				messageStreamWriter = new StreamWriter(messageStream);
+				stream = tcpClient.GetStream();
+				streamReader = new StreamReader(stream);
+				streamWriter = new StreamWriter(stream);
 
 				return true;
 			}
@@ -68,18 +70,15 @@ namespace Client
 
 		public void ProcessServerResponse()
 		{
-			string data;
+			string data = streamReader.ReadLine();
 
-			if ((data = messageStreamReader.ReadLine()) != null)
-			{
-				mainWindow.UpdateChatTextBox(data);
-			}
+			mainWindow.UpdateChatTextBox(data);
 		}
 
 		public void SendDataToServer(string data)
 		{
-			messageStreamWriter.WriteLine(data);
-			messageStreamWriter.Flush();
+			streamWriter.WriteLine(data);
+			streamWriter.Flush();
 		}
 
 		private void ShowForm(MainWindow mainWindow)

@@ -15,6 +15,7 @@ namespace Server
 		//Locals
 		private TcpListener tcpListener;
 		private List<Thread> threads = new List<Thread>();
+		private List<ConnectedClient> connectedClients = new List<ConnectedClient>();
 
 		public Server(string ipAddress, int port)
 		{
@@ -30,8 +31,8 @@ namespace Server
 			while (true)
 			{
 				Socket clientSocket = tcpListener.AcceptSocket();
-
-				PrintToConsoleAsLogMessage("Client Joined!");
+				connectedClients.Add(new ConnectedClient(clientSocket));
+				PrintToConsoleAsLogMessage(connectedClients.Last().GetNickname() + " Joined the server!");
 				threads.Add(new Thread(() => { ClientMethod(clientSocket); }));
 				threads.Last().Start();
 			}
