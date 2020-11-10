@@ -24,7 +24,7 @@ namespace Client
 
 		public bool inApp;
 
-		public Client(string ipAddress, int port)
+		public Client()
 		{
 			tcpClient = new TcpClient();
 			serverConnectionWindow = new ServerConnectionWindow(this);
@@ -50,7 +50,8 @@ namespace Client
 		}
 
 		public void Run()
-		{ 
+		{
+			inApp = true;
 			while(inApp)
 			{
 				ProcessServerResponse();
@@ -80,9 +81,16 @@ namespace Client
 			try
 			{
 				string data = streamReader.ReadLine();
-				mainWindow.UpdateChatTextBox(data);
+				string[] dataArray = data.Split(' ');
+				string serverProcess = dataArray[0];
+				string serverData = data.Substring(serverProcess.Length + 1);
+
+				if (serverProcess == "/server.message")
+				{
+					mainWindow.UpdateChatTextBox(serverData);
+				}
 			}
-			catch(Exception e)
+			catch (Exception e)
 			{
 
 			}

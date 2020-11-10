@@ -48,7 +48,7 @@ namespace Client
 				return;
 			}
 
-			client.SendDataToServer(InputMessageTextBox.Text);
+			client.SendDataToServer("/client.message " + InputMessageTextBox.Text);
 		}
 
 		private void MainWindow_FormClosing(object sender, FormClosingEventArgs e)

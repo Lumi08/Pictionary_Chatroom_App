@@ -14,7 +14,7 @@ namespace Client
 		[STAThread]
 		static void Main()
 		{
-			Client client = new Client("192.168.0.13", 4444);
+			Client client = new Client();
 		}
 	}
 }

@@ -24,7 +24,17 @@ namespace Server
 
 		public void Start()
 		{
-			tcpListener.Start();
+			try
+			{
+				tcpListener.Start();
+			}
+			catch(Exception e)
+			{
+				Console.WriteLine(e);
+				PrintToConsoleAsLogMessage("Error Making Server, you may already have a server running on your machine!");
+				Console.ReadLine();
+				return;
+			}
 
 			PrintToConsoleAsLogMessage("Server Awaiting Client");
 			
@@ -32,7 +42,8 @@ namespace Server
 			{
 				Socket clientSocket = tcpListener.AcceptSocket();
 				connectedClients.Add(new ConnectedClient(clientSocket));
-				PrintToConsoleAsLogMessage(connectedClients.Last().GetNickname() + " Joined the server!");
+				PrintToConsoleAsLogMessage(connectedClients.Last().GetNickname() + " Joined [" + clientSocket.RemoteEndPoint + "]");
+				BroadcastDataToAllClients("/server.message [Server] " + connectedClients.Last().GetNickname() + " has joined the chat!");
 				threads.Add(new Thread(() => { ClientMethod(connectedClients.Last()); }));
 				threads.Last().Start();
 			}
@@ -58,6 +69,8 @@ namespace Server
 
 		private void ProcessDataSentFromClient(string data, ConnectedClient client)
 		{
+			PrintToConsoleAsLogMessage(client.GetNickname() + " " + data);
+
 			if(data.StartsWith("/client.disconnect"))
 			{
 				threads.RemoveAt(connectedClients.IndexOf(client));
@@ -67,9 +80,13 @@ namespace Server
 				return;
 			}
 
-			if(data == "hi")
+			string[] dataArray = data.Split(' ');
+			string clientProcess = dataArray[0];
+			string clientMessage = data.Substring(clientProcess.Length + 1);
+
+			if (clientProcess == "/client.message")
 			{
-				BroadcastDataToAllClients("hey");
+				BroadcastDataToAllClients("/server.message [" + client.GetNickname() + "] " + clientMessage);
 			}
 		}
 
