@@ -14,6 +14,7 @@ namespace Client
 	{
 		//Forms
 		private MainWindow mainWindow;
+		private ServerConnectionWindow serverConnectionWindow;
 
 		//Network
 		private TcpClient tcpClient;
@@ -26,19 +27,26 @@ namespace Client
 		public Client(string ipAddress, int port)
 		{
 			tcpClient = new TcpClient();
+			serverConnectionWindow = new ServerConnectionWindow(this);
+			serverConnectionWindow.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+			serverConnectionWindow.MaximizeBox = false;
+			Thread formThread1 = new Thread(() => { ShowForm(serverConnectionWindow); });
+
+			formThread1.Start();
+			formThread1.Join();
+
 			mainWindow = new MainWindow(this);
+			mainWindow.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+			mainWindow.MaximizeBox = false;
+			mainWindow.Text = "Chat Room  -  Nickname: " + serverConnectionWindow.GetNickname();
+			formThread1 = new Thread(() => { ShowForm(mainWindow); });
 
-			if(ConnectToServer(ipAddress, port))
-			{
-				streamWriter.WriteLine("Ryan");
-				streamWriter.Flush();
+			streamWriter.WriteLine(serverConnectionWindow.GetNickname());
+			streamWriter.Flush();
 
-				Thread formThread = new Thread(() => { ShowForm(mainWindow); });
-				inApp = true;
-				formThread.Start();
-				Run();
-				formThread.Join();
-			}
+			formThread1.Start();
+			Run();
+			formThread1.Join();
 		}
 
 		public void Run()
@@ -49,7 +57,7 @@ namespace Client
 			}
 		}
 
-		private bool ConnectToServer(string ipAddress, int port)
+		public bool ConnectToServer(string ipAddress, int port)
 		{
 			try
 			{
@@ -87,6 +95,11 @@ namespace Client
 		}
 
 		private void ShowForm(MainWindow mainWindow)
+		{
+			mainWindow.ShowDialog();
+		}
+		
+		private void ShowForm(ServerConnectionWindow mainWindow)
 		{
 			mainWindow.ShowDialog();
 		}
