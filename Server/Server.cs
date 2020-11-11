@@ -40,13 +40,24 @@ namespace Server
 			
 			while (true)
 			{
+				
 				Socket clientSocket = tcpListener.AcceptSocket();
-				connectedClients.Add(new ConnectedClient(clientSocket));
-				PrintToConsoleAsLogMessage(connectedClients.Last().GetNickname() + " Joined [" + clientSocket.RemoteEndPoint + "]");
-				BroadcastDataToAllClients("/server.message [Server] " + connectedClients.Last().GetNickname() + " has joined the chat!");
-				UpdateClientsOnlineBox();
-				threads.Add(new Thread(() => { ClientMethod(connectedClients.Last()); }));
-				threads.Last().Start();
+				ConnectedClient newClient = new ConnectedClient(clientSocket);
+
+				if (connectedClients.Count < 3)
+				{
+					connectedClients.Add(newClient);
+					PrintToConsoleAsLogMessage(connectedClients.Last().GetNickname() + " Joined [" + clientSocket.RemoteEndPoint + "]");
+					BroadcastDataToAllClients("/server.message [Server] " + connectedClients.Last().GetNickname() + " has joined the chat!");
+					UpdateClientsOnlineBox();
+					threads.Add(new Thread(() => { ClientMethod(connectedClients.Last()); }));
+					threads.Last().Start();
+				}
+				else
+				{
+					SendDataToSpecificClient(newClient, "/server.full ");
+					Thread test = new Thread(() => { ClientMethod(newClient); });
+				}
 			}
 
 		}
@@ -77,18 +88,21 @@ namespace Server
 				connectedClients.Remove(client);
 				PrintToConsoleAsLogMessage(client.GetNickname() + " Left The Server. [" + client.GetSocket().RemoteEndPoint + "]");
 				BroadcastDataToAllClients("/server.message [Server] " + client.GetNickname() + " has left the chat!");
+				//client.CloseConnection();
 				UpdateClientsOnlineBox();
 				return;
 			}
 
 			string[] dataArray = data.Split(' ');
 			string clientProcess = dataArray[0];
+			string clientCommand = dataArray[1];
 			string clientMessage = data.Substring(clientProcess.Length + 1);
-			PrintToConsoleAsLogMessage(client.GetNickname() + ": " + clientMessage);
 
 			if (clientProcess == "/client.message")
 			{
+				PrintToConsoleAsLogMessage(client.GetNickname() + ": " + clientMessage);
 				BroadcastDataToAllClients("/server.message [" + client.GetNickname() + "] " + clientMessage);
+				return;
 			}
 		}
 
@@ -99,6 +113,12 @@ namespace Server
 				client.GetStreamWriter().WriteLine(data);
 				client.GetStreamWriter().Flush();
 			}
+		}
+
+		private void SendDataToSpecificClient(ConnectedClient client, string data)
+		{
+			client.GetStreamWriter().WriteLine(data);
+			client.GetStreamWriter().Flush();
 		}
 
 		private void UpdateClientsOnlineBox()

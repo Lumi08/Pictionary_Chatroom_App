@@ -22,22 +22,25 @@ namespace Client
 		private StreamReader streamReader;
 		private StreamWriter streamWriter;
 
+		private Thread formThread1;
 		public bool inApp;
 
 		public Client()
 		{
-			tcpClient = new TcpClient();
 			serverConnectionWindow = new ServerConnectionWindow(this);
-			serverConnectionWindow.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
-			serverConnectionWindow.MaximizeBox = false;
-			Thread formThread1 = new Thread(() => { ShowForm(serverConnectionWindow); });
+			mainWindow = new MainWindow(this);
+			Start();
+		}
+
+		public void Start()
+		{
+			tcpClient = new TcpClient();
+			formThread1 = new Thread(() => { ShowForm(serverConnectionWindow); });
 
 			formThread1.Start();
 			formThread1.Join();
 
-			mainWindow = new MainWindow(this);
-			mainWindow.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
-			mainWindow.MaximizeBox = false;
+			
 			mainWindow.Text = "Chat Room  -  Nickname: " + serverConnectionWindow.GetNickname();
 			formThread1 = new Thread(() => { ShowForm(mainWindow); });
 
@@ -47,6 +50,7 @@ namespace Client
 			formThread1.Start();
 			Run();
 			formThread1.Join();
+			
 		}
 
 		public void Run()
@@ -93,6 +97,16 @@ namespace Client
 				if (serverProcess == "/server.clientlist")
 				{
 					mainWindow.UpdateClientsOnlineBox(serverData);
+				}
+
+				if (serverProcess == "/server.full")
+				{
+					formThread1.Abort();
+					//mainWindow.Close();
+					Close();
+					
+					serverConnectionWindow.SetErrorMessage("Server is full!");
+					Start();
 				}
 			}
 			catch (Exception e)

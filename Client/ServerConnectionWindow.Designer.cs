@@ -136,6 +136,7 @@
 			this.MaximizeBox = false;
 			this.Name = "ServerConnectionWindow";
 			this.Text = "ConnectionForm";
+			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ServerConnectionWindow_FormClosing);
 			this.ResumeLayout(false);
 			this.PerformLayout();
 

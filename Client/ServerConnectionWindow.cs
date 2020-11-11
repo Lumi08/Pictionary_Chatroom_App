@@ -16,7 +16,7 @@ namespace Client
 		private string ipAddress;
 		private int port;
 		private Client client;
-
+		private bool forceClosed = false;
 
 		public ServerConnectionWindow(Client client)
 		{
@@ -79,6 +79,16 @@ namespace Client
 		public int GetPort()
 		{
 			return this.port;
+		}
+
+		public bool GetForcedClosed()
+		{
+			return forceClosed;
+		}
+
+		private void ServerConnectionWindow_FormClosing(object sender, FormClosingEventArgs e)
+		{
+			
 		}
 	}
 }
