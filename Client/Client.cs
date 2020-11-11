@@ -107,14 +107,14 @@ namespace Client
 			streamWriter.Flush();
 		}
 
-		private void ShowForm(MainWindow mainWindow)
+		private void ShowForm(MainWindow window)
 		{
-			mainWindow.ShowDialog();
+			window.ShowDialog();
 		}
 		
-		private void ShowForm(ServerConnectionWindow mainWindow)
+		private void ShowForm(ServerConnectionWindow window)
 		{
-			mainWindow.ShowDialog();
+			window.ShowDialog();
 		}
 
 		public void Close()

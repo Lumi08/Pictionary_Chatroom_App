@@ -70,7 +70,6 @@ namespace Server
 
 		private void ProcessDataSentFromClient(string data, ConnectedClient client)
 		{
-			PrintToConsoleAsLogMessage(client.GetNickname() + " " + data);
 
 			if(data.StartsWith("/client.disconnect"))
 			{
@@ -85,6 +84,7 @@ namespace Server
 			string[] dataArray = data.Split(' ');
 			string clientProcess = dataArray[0];
 			string clientMessage = data.Substring(clientProcess.Length + 1);
+			PrintToConsoleAsLogMessage(client.GetNickname() + ": " + clientMessage);
 
 			if (clientProcess == "/client.message")
 			{

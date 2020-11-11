@@ -73,6 +73,7 @@ namespace Client
 			}
 
 			client.SendDataToServer("/client.message " + InputMessageTextBox.Text);
+			InputMessageTextBox.Text = "";
 		}
 
 		private void MainWindow_FormClosing(object sender, FormClosingEventArgs e)

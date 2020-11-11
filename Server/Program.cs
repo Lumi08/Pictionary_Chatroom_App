@@ -14,9 +14,8 @@ namespace Server
 			int port = 4444;
 			string localIP = Dns.GetHostEntry(Dns.GetHostName()).AddressList[1].ToString();
 
-			Console.WriteLine("Server Started on " + localIP + ":" + port);
-
 			Server server = new Server(localIP, port);
+			server.PrintToConsoleAsLogMessage("Server Started on " + localIP + ":" + port);
 			server.Start();
 			server.Stop();
 		}

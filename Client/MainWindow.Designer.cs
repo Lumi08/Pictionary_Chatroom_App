@@ -39,6 +39,7 @@
 			this.ChatTextBox.Location = new System.Drawing.Point(12, 12);
 			this.ChatTextBox.Multiline = true;
 			this.ChatTextBox.Name = "ChatTextBox";
+			this.ChatTextBox.ReadOnly = true;
 			this.ChatTextBox.Size = new System.Drawing.Size(608, 400);
 			this.ChatTextBox.TabIndex = 0;
 			// 
@@ -64,6 +65,7 @@
 			this.ClientsOnlineBox.Location = new System.Drawing.Point(626, 12);
 			this.ClientsOnlineBox.Multiline = true;
 			this.ClientsOnlineBox.Name = "ClientsOnlineBox";
+			this.ClientsOnlineBox.ReadOnly = true;
 			this.ClientsOnlineBox.Size = new System.Drawing.Size(162, 252);
 			this.ClientsOnlineBox.TabIndex = 3;
 			// 
@@ -71,6 +73,7 @@
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+			this.BackColor = System.Drawing.Color.Silver;
 			this.ClientSize = new System.Drawing.Size(800, 450);
 			this.Controls.Add(this.ClientsOnlineBox);
 			this.Controls.Add(this.SendMessageButton);
