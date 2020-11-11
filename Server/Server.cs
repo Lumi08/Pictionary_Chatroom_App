@@ -44,6 +44,7 @@ namespace Server
 				connectedClients.Add(new ConnectedClient(clientSocket));
 				PrintToConsoleAsLogMessage(connectedClients.Last().GetNickname() + " Joined [" + clientSocket.RemoteEndPoint + "]");
 				BroadcastDataToAllClients("/server.message [Server] " + connectedClients.Last().GetNickname() + " has joined the chat!");
+				UpdateClientsOnlineBox();
 				threads.Add(new Thread(() => { ClientMethod(connectedClients.Last()); }));
 				threads.Last().Start();
 			}
@@ -77,6 +78,7 @@ namespace Server
 				connectedClients.Remove(client);
 				PrintToConsoleAsLogMessage(client.GetNickname() + " Left The Server. [" + client.GetSocket().RemoteEndPoint + "]");
 				BroadcastDataToAllClients("/server.message [Server] " + client.GetNickname() + " has left the chat!");
+				UpdateClientsOnlineBox();
 				return;
 			}
 
@@ -97,6 +99,18 @@ namespace Server
 				client.GetStreamWriter().WriteLine(data);
 				client.GetStreamWriter().Flush();
 			}
+		}
+
+		private void UpdateClientsOnlineBox()
+		{
+			string clients = "/server.clientlist";
+
+			foreach(ConnectedClient onlineClient in connectedClients)
+			{
+				clients += " " + onlineClient.GetNickname();
+			}
+
+			BroadcastDataToAllClients(clients);
 		}
 
 		public void PrintToConsoleAsLogMessage(string x)

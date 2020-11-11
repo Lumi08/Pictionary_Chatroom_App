@@ -16,6 +16,9 @@ namespace Client
 		public delegate void UpdateChatTextBoxDelegate(string data);
 		public UpdateChatTextBoxDelegate updateChatTextBoxDelegate;
 
+		public delegate void UpdateClientsOnlineDelegate(string clients);
+		public UpdateClientsOnlineDelegate updateClientsOnlineDelegate;
+
 		//Locals
 		Client client;
 
@@ -24,6 +27,7 @@ namespace Client
 			this.client = client;
 			InitializeComponent();
 			updateChatTextBoxDelegate = new UpdateChatTextBoxDelegate(UpdateChatTextBox);
+			updateClientsOnlineDelegate = new UpdateClientsOnlineDelegate(UpdateClientsOnlineBox);
 		}
 
 		public void UpdateChatTextBox(string data)
@@ -37,6 +41,26 @@ namespace Client
 				ChatTextBox.Text += data += Environment.NewLine;
 				ChatTextBox.SelectionStart = ChatTextBox.Text.Length;
 				ChatTextBox.ScrollToCaret();
+			}
+		}
+
+		public void UpdateClientsOnlineBox(string clients)
+		{
+			if(ClientsOnlineBox.InvokeRequired)
+			{
+				Invoke(updateClientsOnlineDelegate, clients);
+			}
+			else
+			{
+				string[] individualOnlineClients = clients.Split(' ');
+
+				ClientsOnlineBox.Text = "";
+				foreach(string onlineClient in individualOnlineClients)
+				{
+					ClientsOnlineBox.Text += onlineClient + Environment.NewLine; 
+				}
+				ClientsOnlineBox.SelectionStart = ClientsOnlineBox.Text.Length;
+				ClientsOnlineBox.ScrollToCaret();
 			}
 		}
 

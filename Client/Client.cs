@@ -89,10 +89,15 @@ namespace Client
 				{
 					mainWindow.UpdateChatTextBox(serverData);
 				}
+
+				if (serverProcess == "/server.clientlist")
+				{
+					mainWindow.UpdateClientsOnlineBox(serverData);
+				}
 			}
 			catch (Exception e)
 			{
-
+				Console.WriteLine(e);
 			}
 		}
 

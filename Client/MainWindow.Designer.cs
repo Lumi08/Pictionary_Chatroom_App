@@ -31,6 +31,7 @@
 			this.ChatTextBox = new System.Windows.Forms.TextBox();
 			this.InputMessageTextBox = new System.Windows.Forms.TextBox();
 			this.SendMessageButton = new System.Windows.Forms.Button();
+			this.ClientsOnlineBox = new System.Windows.Forms.TextBox();
 			this.SuspendLayout();
 			// 
 			// ChatTextBox
@@ -58,11 +59,20 @@
 			this.SendMessageButton.UseVisualStyleBackColor = true;
 			this.SendMessageButton.Click += new System.EventHandler(this.SendButton_Click);
 			// 
+			// ClientsOnlineBox
+			// 
+			this.ClientsOnlineBox.Location = new System.Drawing.Point(626, 12);
+			this.ClientsOnlineBox.Multiline = true;
+			this.ClientsOnlineBox.Name = "ClientsOnlineBox";
+			this.ClientsOnlineBox.Size = new System.Drawing.Size(162, 252);
+			this.ClientsOnlineBox.TabIndex = 3;
+			// 
 			// MainWindow
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(800, 450);
+			this.Controls.Add(this.ClientsOnlineBox);
 			this.Controls.Add(this.SendMessageButton);
 			this.Controls.Add(this.InputMessageTextBox);
 			this.Controls.Add(this.ChatTextBox);
@@ -81,6 +91,7 @@
 		private System.Windows.Forms.TextBox ChatTextBox;
 		private System.Windows.Forms.TextBox InputMessageTextBox;
 		private System.Windows.Forms.Button SendMessageButton;
+		private System.Windows.Forms.TextBox ClientsOnlineBox;
 	}
 }
 
