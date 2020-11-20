@@ -7,6 +7,7 @@ using System.Threading;
 using System.Net.Sockets;
 using System.Net;
 using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Client
 {
@@ -18,8 +19,9 @@ namespace Client
 		//Network
 		private TcpClient tcpClient;
 		private NetworkStream stream;
-		private StreamReader streamReader;
-		private StreamWriter streamWriter;
+		private BinaryReader reader;
+		private BinaryWriter writer;
+		private BinaryFormatter formatter;
 
 		private Thread networkProcessingThread;
 		//private Thread formThread;
@@ -40,8 +42,8 @@ namespace Client
 
 		public void Run()
 		{
-			string serverResponse;
-			while ((serverResponse = streamReader.ReadLine()) != null)
+			Packets.Packet serverResponse;
+			while ((serverResponse = ReadDataFromserver()) != null)
 			{
 				ProcessServerResponse(serverResponse);
 			}
@@ -54,8 +56,9 @@ namespace Client
 				tcpClient = new TcpClient();
 				tcpClient.Connect(new IPEndPoint(IPAddress.Parse(ipAddress), port));
 				stream = tcpClient.GetStream();
-				streamReader = new StreamReader(stream);
-				streamWriter = new StreamWriter(stream);
+				formatter = new BinaryFormatter();
+				reader = new BinaryReader(stream);
+				writer = new BinaryWriter(stream);
 				networkProcessingThread = new Thread(() => { Run(); });
 
 				return true;
@@ -71,8 +74,7 @@ namespace Client
 		{
 			if (ConnectToServer("192.168.0.13", 4444))
 			{
-				streamWriter.WriteLine("Ryan");
-				streamWriter.Flush();
+				SendDataToServer(new Packets.NicknamePacket("Ryan"));
 
 				networkProcessingThread.Start();
 				return true;
@@ -85,9 +87,18 @@ namespace Client
 			return false;
 		}
 
-		public void ProcessServerResponse(string serverResponse)
+		public void ProcessServerResponse(Packets.Packet serverResponse)
 		{
-			string[] dataArray = serverResponse.Split(' ');
+			switch(serverResponse.m_PacketType)
+			{
+				case Packets.Packet.PacketType.ChatMessage:
+					Packets.ChatMessagePacket chatPacket = serverResponse as Packets.ChatMessagePacket;
+					clientForm.UpdateChatWindow(chatPacket.Message);
+					break;
+			}
+
+
+			/*string[] dataArray = serverResponse.Split(' ');
 			string serverProcess = dataArray[0];
 			string serverData = serverResponse.Substring(serverProcess.Length + 1);
 
@@ -106,13 +117,32 @@ namespace Client
 				networkProcessingThread.Abort();
 				//mainWindow.Close();
 				Close();
-			}
+			}*/
 		}
 
-		public void SendDataToServer(string data)
+		public void SendDataToServer(Packets.Packet packet)
 		{
-			streamWriter.WriteLine(data);
-			streamWriter.Flush();
+			MemoryStream memoryStream = new MemoryStream();
+
+			formatter.Serialize(memoryStream, packet);
+
+			byte[] buffer = memoryStream.GetBuffer();
+
+			writer.Write(buffer.Length);
+			writer.Write(buffer);
+			writer.Flush();
+		}
+
+		public Packets.Packet ReadDataFromserver()
+		{
+			int numberOfBytes;
+			if ((numberOfBytes = reader.ReadInt32()) != -1)
+			{
+				byte[] buffer = reader.ReadBytes(numberOfBytes);
+				MemoryStream memoryStream = new MemoryStream(buffer);
+				return formatter.Deserialize(memoryStream) as Packets.Packet;
+			}
+			return null;
 		}
 
 		private void ShowForm(ClientForm window)
@@ -123,7 +153,7 @@ namespace Client
 		public void Close()
 		{
 			networkProcessingThread.Abort();
-			SendDataToServer("/client.disconnect");
+			//SendDataToServer("/client.disconnect");
 			tcpClient.Close();
 		}
 	}

@@ -49,7 +49,7 @@ namespace Client
 
 		private void SubmitButton_Click(object sender, EventArgs e)
 		{
-			client.SendDataToServer("/client.message " + InputField.Text);
+			client.SendDataToServer(new Packets.ChatMessagePacket(InputField.Text));
 			InputField.Clear();
 		}
 
@@ -75,7 +75,7 @@ namespace Client
 			DisconnectButton.Visibility = Visibility.Hidden;
 			InputField.IsReadOnly = true;
 			SubmitButton.IsEnabled = false;
-			client.SendDataToServer("/client.disconnect");
+			//client.SendDataToServer("/client.disconnect");
 		}
 	}
 }

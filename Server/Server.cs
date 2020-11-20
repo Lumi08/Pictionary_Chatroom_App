@@ -48,8 +48,8 @@ namespace Server
 				{
 					connectedClients.Add(newClient);
 					PrintToConsoleAsLogMessage(connectedClients.Last().GetNickname() + " Joined [" + clientSocket.RemoteEndPoint + "]");
-					BroadcastDataToAllClients("/server.message [Server] " + connectedClients.Last().GetNickname() + " has joined the chat!");
-					UpdateClientsOnlineBox();
+					BroadcastDataToAllClients("[Server] " + connectedClients.Last().GetNickname() + " has joined the chat!");
+					//UpdateClientsOnlineBox();
 					threads.Add(new Thread(() => { ClientMethod(connectedClients.Last()); }));
 					threads.Last().Start();
 				}
@@ -69,9 +69,9 @@ namespace Server
 
 		private void ClientMethod(ConnectedClient connectedClient)
 		{
-			string recievedDataFromClientSocket;
+			Packets.Packet recievedDataFromClientSocket;
 
-			while((recievedDataFromClientSocket = connectedClient.GetStreamReader().ReadLine()) != null)
+			while((recievedDataFromClientSocket = connectedClient.Read()) != null)
 			{
 				ProcessDataSentFromClient(recievedDataFromClientSocket, connectedClient);
 			}
@@ -79,30 +79,20 @@ namespace Server
 			connectedClient.CloseConnection();
 		}
 
-		private void ProcessDataSentFromClient(string data, ConnectedClient client)
+		private void ProcessDataSentFromClient(Packets.Packet data, ConnectedClient client)
 		{
 
-			if(data.StartsWith("/client.disconnect"))
+			switch(data.m_PacketType)
 			{
-				threads.RemoveAt(connectedClients.IndexOf(client));
-				connectedClients.Remove(client);
-				PrintToConsoleAsLogMessage(client.GetNickname() + " Left The Server. [" + client.GetSocket().RemoteEndPoint + "]");
-				BroadcastDataToAllClients("/server.message [Server] " + client.GetNickname() + " has left the chat!");
-				//client.CloseConnection();
-				UpdateClientsOnlineBox();
-				return;
-			}
+				case Packets.Packet.PacketType.Nickname:
+					Packets.NicknamePacket nicknamePacket = data as Packets.NicknamePacket;
+					client.SetNickname(nicknamePacket.Name);
+					break;
 
-			string[] dataArray = data.Split(' ');
-			string clientProcess = dataArray[0];
-			string clientCommand = dataArray[1];
-			string clientMessage = data.Substring(clientProcess.Length + 1);
-
-			if (clientProcess == "/client.message")
-			{
-				PrintToConsoleAsLogMessage(client.GetNickname() + ": " + clientMessage);
-				BroadcastDataToAllClients("/server.message [" + client.GetNickname() + "] " + clientMessage);
-				return;
+				case Packets.Packet.PacketType.ChatMessage:
+					Packets.ChatMessagePacket messagePacket = data as Packets.ChatMessagePacket;
+					BroadcastDataToAllClients("[" + client.GetNickname() + "] " + messagePacket.Message);
+					break;
 			}
 		}
 
@@ -110,15 +100,14 @@ namespace Server
 		{
 			foreach(ConnectedClient client in connectedClients)
 			{
-				client.GetStreamWriter().WriteLine(data);
-				client.GetStreamWriter().Flush();
+				client.Send(new Packets.ChatMessagePacket(data));
 			}
 		}
 
 		private void SendDataToSpecificClient(ConnectedClient client, string data)
 		{
-			client.GetStreamWriter().WriteLine(data);
-			client.GetStreamWriter().Flush();
+			//client.GetStreamWriter().WriteLine(data);
+			//client.GetStreamWriter().Flush();
 		}
 
 		private void UpdateClientsOnlineBox()
