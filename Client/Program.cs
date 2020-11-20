@@ -14,7 +14,7 @@ namespace Client
 		[STAThread]
 		static void Main()
 		{
-			Client client = new Client();
+			ClientManager client = new ClientManager();
 		}
 	}
 }
