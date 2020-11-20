@@ -21,7 +21,8 @@ namespace Client
 		private StreamReader streamReader;
 		private StreamWriter streamWriter;
 
-		private Thread processingThread;
+		private Thread networkProcessingThread;
+		//private Thread formThread;
 		public bool inApp;
 
 		public ClientManager()
@@ -32,23 +33,9 @@ namespace Client
 
 		public void Start()
 		{
-			processingThread = new Thread(() => { Run(); });
-			tcpClient = new TcpClient();
-
-			if (ConnectToServer("192.168.0.13", 4444))
-			{
-				streamWriter.WriteLine("Ryan");
-				streamWriter.Flush();
-
-				processingThread.Start();
-				ShowForm(clientForm);
-				processingThread.Join();
-			}
-			else
-			{
-				clientForm.UpdateChatWindow("Cant Connect to server!");
-			}
-
+			networkProcessingThread = new Thread(() => { Run(); });
+			//tcpClient = new TcpClient();
+			ShowForm(clientForm);
 		}
 
 		public void Run()
@@ -64,10 +51,12 @@ namespace Client
 		{
 			try
 			{
+				tcpClient = new TcpClient();
 				tcpClient.Connect(new IPEndPoint(IPAddress.Parse(ipAddress), port));
 				stream = tcpClient.GetStream();
 				streamReader = new StreamReader(stream);
 				streamWriter = new StreamWriter(stream);
+				networkProcessingThread = new Thread(() => { Run(); });
 
 				return true;
 			}
@@ -76,6 +65,24 @@ namespace Client
 				Console.WriteLine("Exception: " + e.Message);
 				return false;
 			}
+		}
+
+		public bool AttemptToConnect()
+		{
+			if (ConnectToServer("192.168.0.13", 4444))
+			{
+				streamWriter.WriteLine("Ryan");
+				streamWriter.Flush();
+
+				networkProcessingThread.Start();
+				return true;
+			}
+			else
+			{
+				clientForm.UpdateChatWindow("Cant Connect to server!");
+			}
+
+			return false;
 		}
 
 		public void ProcessServerResponse(string serverResponse)
@@ -96,7 +103,7 @@ namespace Client
 
 			if (serverProcess == "/server.full")
 			{
-				processingThread.Abort();
+				networkProcessingThread.Abort();
 				//mainWindow.Close();
 				Close();
 			}
@@ -115,7 +122,7 @@ namespace Client
 
 		public void Close()
 		{
-			processingThread.Abort();
+			networkProcessingThread.Abort();
 			SendDataToServer("/client.disconnect");
 			tcpClient.Close();
 		}

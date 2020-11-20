@@ -9,9 +9,19 @@
         ResizeMode="NoResize"
         Closing="Window_Closing">
     <Grid Margin="10">
-        <TextBox x:Name="MessageWindow" TextWrapping="Wrap" Margin="0,0,0,0" Height="362" VerticalAlignment="Top"/>
-        <TextBox x:Name="InputField" VerticalAlignment="Bottom" Height="24" Margin="0,0,110,0" TextWrapping="Wrap"/>
-        <Button Content="Button" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,0,0" Width="106" Height="24" Click="SubmitButton_Click"/>
+        <RichTextBox x:Name="MessageWindow" Margin="0,30" IsReadOnly="True">
+            <RichTextBox.Resources>
+                <Style TargetType="{x:Type Paragraph}">
+                    <Setter Property="Margin" Value="0" />
+                </Style>
+            </RichTextBox.Resources>
+        </RichTextBox>
+        
+        <TextBox x:Name="InputField" VerticalAlignment="Bottom" Height="24" Margin="0,0,110,0" TextWrapping="Wrap" IsReadOnly="True"/>
+        <Button x:Name="SubmitButton" Content="Button" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,0,0" Width="106" Height="24" Click="SubmitButton_Click" IsEnabled="False"/>
+        <Button x:Name="ConnectButton" Content="Connect" Margin="0,0,190,370" Click="ConnectButton_Click" Background="#FF67D162"/>
+        <Button Content="Button" Margin="190,0,0,370"/>
+        <Button x:Name="DisconnectButton" Content="Disconnect" Margin="0,0,190,370" Click="DisconnectButton_Click" Visibility="Hidden" Background="#FFAA5B5B"/>
 
     </Grid>
 </Window>
