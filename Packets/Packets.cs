@@ -12,7 +12,8 @@ namespace Packets
 		{
 			ChatMessage,
 			PrivateMessage,
-			Nickname
+			Nickname,
+			Disconnect
 		}
 
 		private PacketType _packetType;
@@ -57,6 +58,15 @@ namespace Packets
 		{
 			get { return name; }
 			protected set { }
+		}
+	}
+
+	[Serializable()]
+	public class DisconnectPacket : Packet
+	{
+		public DisconnectPacket()
+		{
+			m_PacketType = PacketType.Disconnect;
 		}
 	}
 }

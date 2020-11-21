@@ -93,6 +93,15 @@ namespace Server
 					Packets.ChatMessagePacket messagePacket = data as Packets.ChatMessagePacket;
 					BroadcastDataToAllClients("[" + client.GetNickname() + "] " + messagePacket.Message);
 					break;
+
+				case Packets.Packet.PacketType.Disconnect:
+					threads.RemoveAt(connectedClients.IndexOf(client));
+					connectedClients.Remove(client);
+					PrintToConsoleAsLogMessage(client.GetNickname() + " Left The Server. [" + client.GetSocket().RemoteEndPoint + "]");
+					BroadcastDataToAllClients("[Server] " + client.GetNickname() + " has left the chat!");
+					client.CloseConnection();
+					//UpdateClientsOnlineBox();
+					break;
 			}
 		}
 

@@ -20,6 +20,7 @@ namespace Client
 	public partial class ClientForm : Window
 	{
 		private ClientManager client;
+		public bool isConnected;
 
 		public ClientForm(ClientManager client)
 		{
@@ -62,6 +63,7 @@ namespace Client
 		{
 			if(client.AttemptToConnect())
 			{
+				isConnected = true;
 				ConnectButton.Visibility = Visibility.Hidden;
 				DisconnectButton.Visibility = Visibility.Visible;
 				InputField.IsReadOnly = false;
@@ -71,11 +73,12 @@ namespace Client
 
 		private void DisconnectButton_Click(object sender, EventArgs e)
 		{
+			client.Close();
 			ConnectButton.Visibility = Visibility.Visible;
 			DisconnectButton.Visibility = Visibility.Hidden;
 			InputField.IsReadOnly = true;
 			SubmitButton.IsEnabled = false;
-			//client.SendDataToServer("/client.disconnect");
+			isConnected = false;
 		}
 	}
 }

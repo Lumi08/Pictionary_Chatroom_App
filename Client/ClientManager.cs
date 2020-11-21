@@ -153,7 +153,10 @@ namespace Client
 		public void Close()
 		{
 			networkProcessingThread.Abort();
-			//SendDataToServer("/client.disconnect");
+			if(clientForm.isConnected)
+			{
+				SendDataToServer(new Packets.DisconnectPacket());
+			}
 			tcpClient.Close();
 		}
 	}
