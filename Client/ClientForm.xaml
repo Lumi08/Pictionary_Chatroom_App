@@ -20,7 +20,7 @@
         <TextBox x:Name="InputField" VerticalAlignment="Bottom" Height="24" Margin="0,0,110,0" TextWrapping="Wrap" IsReadOnly="True"/>
         <Button x:Name="SubmitButton" Content="Button" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,0,0" Width="106" Height="24" Click="SubmitButton_Click" IsEnabled="False"/>
         <Button x:Name="ConnectButton" Content="Connect" Margin="0,0,190,370" Click="ConnectButton_Click" Background="#FF67D162"/>
-        <Button Content="Button" Margin="190,0,0,370"/>
+        <Button x:Name="MenuButton" Content="Connect" Margin="190,0,0,370" Click="MenuButton_Click"/>
         <Button x:Name="DisconnectButton" Content="Disconnect" Margin="0,0,190,370" Click="DisconnectButton_Click" Visibility="Hidden" Background="#FFAA5B5B"/>
 
     </Grid>

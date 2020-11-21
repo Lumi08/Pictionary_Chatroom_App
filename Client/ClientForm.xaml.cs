@@ -21,17 +21,13 @@ namespace Client
 	{
 		private ClientManager client;
 		public bool isConnected;
+		public bool menuOpened = false;
 
 		public ClientForm(ClientManager client)
 		{
 			InitializeComponent();
 			this.client = client;
 		}
-
-		/*public ClientForm()
-		{
-			Program.Start();
-		}*/
 
 		public void UpdateChatWindow(string message)
 		{
@@ -79,6 +75,32 @@ namespace Client
 			InputField.IsReadOnly = true;
 			SubmitButton.IsEnabled = false;
 			isConnected = false;
+		}
+
+		private void MenuButton_Click(object sender, RoutedEventArgs e)
+		{
+			menuOpened = !menuOpened;
+
+			if (menuOpened)
+			{
+				this.Width = 600;
+				ConnectButton.Margin = new Thickness(0, 0, 390, 370);
+				DisconnectButton.Margin = new Thickness(0, 0, 390, 370);
+				MenuButton.Margin = new Thickness(190, 0, 200, 370);
+				MessageWindow.Margin = new Thickness(0, 30, 200, 30);
+				InputField.Margin = new Thickness(0, 0, 310, 0);
+				SubmitButton.Margin = new Thickness(0, 0, 200, 0);
+			}
+			else
+			{
+				this.Width = 400;
+				ConnectButton.Margin = new Thickness(0,0,190,370);
+				DisconnectButton.Margin = new Thickness(0, 0, 190, 370);
+				MenuButton.Margin = new Thickness(190, 0, 0, 370);
+				MessageWindow.Margin = new Thickness(0, 30, 0, 30);
+				InputField.Margin = new Thickness(0, 0, 110, 0);
+				SubmitButton.Margin = new Thickness(0, 0, 0, 0);
+			}
 		}
 	}
 }

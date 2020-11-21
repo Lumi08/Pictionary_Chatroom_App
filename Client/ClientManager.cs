@@ -156,8 +156,8 @@ namespace Client
 			if(clientForm.isConnected)
 			{
 				SendDataToServer(new Packets.DisconnectPacket());
+				tcpClient.Close();
 			}
-			tcpClient.Close();
 		}
 	}
 }
