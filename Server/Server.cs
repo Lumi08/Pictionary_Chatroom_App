@@ -44,7 +44,7 @@ namespace Server
 				Socket clientSocket = tcpListener.AcceptSocket();
 				ConnectedClient newClient = new ConnectedClient(clientSocket);
 
-				if (connectedClients.Count < 1)
+				if (connectedClients.Count < 3)
 				{
 					connectedClients.Add(newClient);
 					PrintToConsoleAsLogMessage(connectedClients.Last().GetNickname() + " Joined [" + clientSocket.RemoteEndPoint + "]");

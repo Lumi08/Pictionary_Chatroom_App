@@ -25,6 +25,8 @@ namespace Client
 		public bool isConnected;
 		public bool menuOpened = false;
 
+		private ClientConnectionForm connectionForm;
+
 		public ClientForm(ClientManager client)
 		{
 			InitializeComponent();
@@ -52,10 +54,7 @@ namespace Client
 		{
 			this.Dispatcher.Invoke(() =>
 			{
-				Run run = new Run("[Error] Server is Currently Full");
-				run.Foreground = new SolidColorBrush(Colors.Black);
-				Paragraph paragraph = new Paragraph(run);
-				MessageWindow.Document.Blocks.Add(paragraph);
+				UpdateChatWindow("[Error] Server is Currently Full", Colors.Red);
 				ConnectButton.Visibility = Visibility.Visible;
 				DisconnectButton.Visibility = Visibility.Hidden;
 				InputField.IsReadOnly = true;
@@ -77,7 +76,10 @@ namespace Client
 
 		private void ConnectButton_Click(object sender, EventArgs e)
 		{
-			if(client.AttemptToConnect())
+			connectionForm = new ClientConnectionForm();
+			connectionForm.ShowDialog();
+
+			if(client.AttemptToConnect(connectionForm.GetIPEndPoint(), connectionForm.GetNickname()))
 			{
 				isConnected = true;
 				ConnectButton.Visibility = Visibility.Hidden;

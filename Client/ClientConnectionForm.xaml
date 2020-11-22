@@ -1,0 +1,22 @@
+﻿<Window x:Class="Client.ClientConnectionForm"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Client"
+        mc:Ignorable="d"
+        Title="ClientForm" Height="238" Width="250" BorderThickness="0" Margin="10,0,0,0"
+        ResizeMode="NoResize">
+    <Grid Margin="10">
+        <TextBox x:Name="NicknameBox" Margin="70,51,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="23"/>
+        <TextBox x:Name="IpBox" Height="23" Margin="70,79,0,0" TextWrapping="Wrap" VerticalAlignment="Top"/>
+        <TextBox x:Name="PortBox" Height="23" Margin="70,107,0,0" TextWrapping="Wrap" VerticalAlignment="Top"/>
+        <Label Content="Nickname" HorizontalAlignment="Left" Height="23" Margin="0,51,0,0" VerticalAlignment="Top" Width="64"/>
+        <Label Content="IP" HorizontalAlignment="Left" Height="23" Margin="0,79,0,0" VerticalAlignment="Top" Width="39"/>
+        <Label Content="Port" HorizontalAlignment="Left" Height="23" Margin="0,107,0,0" VerticalAlignment="Top" Width="39"/>
+        <Label Content="Server Connection" Margin="43,10,0,0" VerticalAlignment="Top" FontSize="18" HorizontalAlignment="Left" Width="155"/>
+        <Button x:Name="SubmitButton" Content="Connect" Margin="0,139,80,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="75" Click="SubmitButton_Click"/>
+        <Label x:Name="ErrorLabel" Margin="10,164,10,-1" VerticalAlignment="Top" Height="26" FontSize="9"/>
+
+    </Grid>
+</Window>

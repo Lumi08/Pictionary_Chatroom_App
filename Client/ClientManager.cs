@@ -50,12 +50,12 @@ namespace Client
 			}
 		}
 
-		public bool ConnectToServer(string ipAddress, int port)
+		public bool ConnectToServer(IPEndPoint iPEndPoint)
 		{
 			try
 			{
 				tcpClient = new TcpClient();
-				tcpClient.Connect(new IPEndPoint(IPAddress.Parse(ipAddress), port));
+				tcpClient.Connect(iPEndPoint);
 				stream = tcpClient.GetStream();
 				formatter = new BinaryFormatter();
 				reader = new BinaryReader(stream);
@@ -71,18 +71,18 @@ namespace Client
 			}
 		}
 
-		public bool AttemptToConnect()
+		public bool AttemptToConnect(IPEndPoint iPEndPoint, string nickname)
 		{
-			if (ConnectToServer("192.168.0.13", 4444))
+			if (ConnectToServer(iPEndPoint))
 			{
-				SendDataToServer(new Packets.NicknamePacket("Ryan"));
+				SendDataToServer(new Packets.NicknamePacket(nickname));
 
 				networkProcessingThread.Start();
 				return true;
 			}
 			else
 			{
-				clientForm.UpdateChatWindow("Cant Connect to server!", Colors.Red);
+				clientForm.UpdateChatWindow("[Error] Failed to Connect to server!", Colors.Red);
 			}
 
 			return false;
