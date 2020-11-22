@@ -19,6 +19,8 @@ namespace Client
 	/// </summary>
 	public partial class ClientForm : Window
 	{
+		private string VERSION = "0.21";
+
 		private ClientManager client;
 		public bool isConnected;
 		public bool menuOpened = false;
@@ -27,20 +29,38 @@ namespace Client
 		{
 			InitializeComponent();
 			this.client = client;
+			MessageWindow.Foreground = new SolidColorBrush(Colors.Gray);
+			MessageWindow.AppendText("Welcome to Chat Facility v" + VERSION); 
 		}
 
-		public void UpdateChatWindow(string message)
+		public void UpdateChatWindow(string message, Color color)
 		{
 			MessageWindow.Dispatcher.Invoke(() =>
 			{
 				Run run = new Run(message);
-				run.Foreground = new SolidColorBrush(Colors.Black);
+				run.Foreground = new SolidColorBrush(color);
 				Paragraph paragraph = new Paragraph(run);
 
 				MessageWindow.Document.Blocks.Add(paragraph);
 
 				MessageWindow.ScrollToEnd();
 
+			});
+		}
+
+		public void ServerFullLogic()
+		{
+			this.Dispatcher.Invoke(() =>
+			{
+				Run run = new Run("[Error] Server is Currently Full");
+				run.Foreground = new SolidColorBrush(Colors.Black);
+				Paragraph paragraph = new Paragraph(run);
+				MessageWindow.Document.Blocks.Add(paragraph);
+				ConnectButton.Visibility = Visibility.Visible;
+				DisconnectButton.Visibility = Visibility.Hidden;
+				InputField.IsReadOnly = true;
+				SubmitButton.IsEnabled = false;
+				isConnected = false;
 			});
 		}
 
@@ -69,6 +89,7 @@ namespace Client
 
 		private void DisconnectButton_Click(object sender, EventArgs e)
 		{
+			UpdateChatWindow("[Server] You Have Left the Chat!", Colors.Red);
 			client.Close();
 			ConnectButton.Visibility = Visibility.Visible;
 			DisconnectButton.Visibility = Visibility.Hidden;
@@ -86,17 +107,17 @@ namespace Client
 				this.Width = 600;
 				ConnectButton.Margin = new Thickness(0, 0, 390, 370);
 				DisconnectButton.Margin = new Thickness(0, 0, 390, 370);
-				MenuButton.Margin = new Thickness(190, 0, 200, 370);
+				MenuButton.Margin = new Thickness(340, 0, 200, 370); 
 				MessageWindow.Margin = new Thickness(0, 30, 200, 30);
 				InputField.Margin = new Thickness(0, 0, 310, 0);
-				SubmitButton.Margin = new Thickness(0, 0, 200, 0);
+				SubmitButton.Margin = new Thickness(0, 0, 200, 0); 
 			}
 			else
 			{
 				this.Width = 400;
 				ConnectButton.Margin = new Thickness(0,0,190,370);
 				DisconnectButton.Margin = new Thickness(0, 0, 190, 370);
-				MenuButton.Margin = new Thickness(190, 0, 0, 370);
+				MenuButton.Margin = new Thickness(340, 0, 0, 370);
 				MessageWindow.Margin = new Thickness(0, 30, 0, 30);
 				InputField.Margin = new Thickness(0, 0, 110, 0);
 				SubmitButton.Margin = new Thickness(0, 0, 0, 0);

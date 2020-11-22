@@ -8,6 +8,7 @@ using System.Net.Sockets;
 using System.Net;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Windows.Media;
 
 namespace Client
 {
@@ -81,7 +82,7 @@ namespace Client
 			}
 			else
 			{
-				clientForm.UpdateChatWindow("Cant Connect to server!");
+				clientForm.UpdateChatWindow("Cant Connect to server!", Colors.Red);
 			}
 
 			return false;
@@ -93,8 +94,14 @@ namespace Client
 			{
 				case Packets.Packet.PacketType.ChatMessage:
 					Packets.ChatMessagePacket chatPacket = serverResponse as Packets.ChatMessagePacket;
-					clientForm.UpdateChatWindow(chatPacket.Message);
+					clientForm.UpdateChatWindow(chatPacket.Message, Colors.Black);
 					break;
+
+				case Packets.Packet.PacketType.Disconnect:
+					clientForm.ServerFullLogic();
+					Close();
+					break;
+					
 			}
 
 

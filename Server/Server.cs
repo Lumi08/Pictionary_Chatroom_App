@@ -44,18 +44,18 @@ namespace Server
 				Socket clientSocket = tcpListener.AcceptSocket();
 				ConnectedClient newClient = new ConnectedClient(clientSocket);
 
-				if (connectedClients.Count < 3)
+				if (connectedClients.Count < 1)
 				{
 					connectedClients.Add(newClient);
 					PrintToConsoleAsLogMessage(connectedClients.Last().GetNickname() + " Joined [" + clientSocket.RemoteEndPoint + "]");
-					BroadcastDataToAllClients("[Server] " + connectedClients.Last().GetNickname() + " has joined the chat!");
+					BroadcastDataToAllClients(new Packets.ChatMessagePacket("[Server] " + connectedClients.Last().GetNickname() + " has joined the chat!"));
 					//UpdateClientsOnlineBox();
 					threads.Add(new Thread(() => { ClientMethod(connectedClients.Last()); }));
 					threads.Last().Start();
 				}
 				else
 				{
-					SendDataToSpecificClient(newClient, "/server.full ");
+					SendDataToSpecificClient(newClient, new Packets.DisconnectPacket());
 					Thread test = new Thread(() => { ClientMethod(newClient); });
 				}
 			}
@@ -91,44 +91,43 @@ namespace Server
 
 				case Packets.Packet.PacketType.ChatMessage:
 					Packets.ChatMessagePacket messagePacket = data as Packets.ChatMessagePacket;
-					BroadcastDataToAllClients("[" + client.GetNickname() + "] " + messagePacket.Message);
+					BroadcastDataToAllClients(new Packets.ChatMessagePacket("[" + client.GetNickname() + "] " + messagePacket.Message));
 					break;
 
 				case Packets.Packet.PacketType.Disconnect:
 					threads.RemoveAt(connectedClients.IndexOf(client));
 					connectedClients.Remove(client);
 					PrintToConsoleAsLogMessage(client.GetNickname() + " Left The Server. [" + client.GetSocket().RemoteEndPoint + "]");
-					BroadcastDataToAllClients("[Server] " + client.GetNickname() + " has left the chat!");
+					BroadcastDataToAllClients(new Packets.ChatMessagePacket("[Server] " + client.GetNickname() + " has left the chat!"));
 					client.CloseConnection();
 					//UpdateClientsOnlineBox();
 					break;
 			}
 		}
 
-		private void BroadcastDataToAllClients(string data)
+		private void BroadcastDataToAllClients(Packets.Packet packet)
 		{
 			foreach(ConnectedClient client in connectedClients)
 			{
-				client.Send(new Packets.ChatMessagePacket(data));
+				client.Send(packet);
 			}
 		}
 
-		private void SendDataToSpecificClient(ConnectedClient client, string data)
+		private void SendDataToSpecificClient(ConnectedClient client, Packets.Packet packet)
 		{
-			//client.GetStreamWriter().WriteLine(data);
-			//client.GetStreamWriter().Flush();
+			client.Send(packet);
 		}
 
 		private void UpdateClientsOnlineBox()
 		{
-			string clients = "/server.clientlist";
+			/*string clients = "/server.clientlist";
 
 			foreach(ConnectedClient onlineClient in connectedClients)
 			{
 				clients += " " + onlineClient.GetNickname();
 			}
 
-			BroadcastDataToAllClients(clients);
+			BroadcastDataToAllClients(clients);*/
 		}
 
 		public void PrintToConsoleAsLogMessage(string x)
