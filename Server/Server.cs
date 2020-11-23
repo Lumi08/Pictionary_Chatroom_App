@@ -36,7 +36,7 @@ namespace Server
 				return;
 			}
 
-			PrintToConsoleAsLogMessage("Server Awaiting Client");
+			PrintToConsoleAsLogMessage("Server Open to Client Connections");
 			
 			while (true)
 			{
@@ -81,17 +81,48 @@ namespace Server
 
 		private void ProcessDataSentFromClient(Packets.Packet data, ConnectedClient client)
 		{
-
-			switch(data.m_PacketType)
+			switch (data.m_PacketType)
 			{
 				case Packets.Packet.PacketType.Nickname:
 					Packets.NicknamePacket nicknamePacket = data as Packets.NicknamePacket;
 					client.SetNickname(nicknamePacket.Name);
+					PrintToConsoleAsLogMessage(nicknamePacket.m_PacketType + " from: " + client.GetNickname() + " data: " + nicknamePacket.Name);
 					break;
 
 				case Packets.Packet.PacketType.ChatMessage:
 					Packets.ChatMessagePacket messagePacket = data as Packets.ChatMessagePacket;
 					BroadcastDataToAllClients(new Packets.ChatMessagePacket("[" + client.GetNickname() + "] " + messagePacket.Message));
+					PrintToConsoleAsLogMessage("[" + messagePacket.m_PacketType + "] from [" + client.GetNickname() + " " + client.GetSocket().RemoteEndPoint + "] Message: " + messagePacket.Message);
+					break;
+
+				case Packets.Packet.PacketType.PrivateMessage:
+					Packets.PrivateMessagePacket privateMessagePacket = data as Packets.PrivateMessagePacket;
+
+					foreach(ConnectedClient target in connectedClients)
+					{
+						if(target.GetNickname().ToLower() == privateMessagePacket.TargetUser.ToLower())
+						{
+							if(target == client)
+							{
+								PrintToConsoleAsLogMessage("[Error] [" + client.GetNickname() + " " + client.GetSocket().RemoteEndPoint + "] Tried to send a Private Message to Themself");
+								SendDataToSpecificClient(client, new Packets.ChatMessagePacket("[Error] You Can't Message Yourself"));
+								return;
+							}
+
+							PrintToConsoleAsLogMessage("[" + privateMessagePacket.m_PacketType + "] from [" + client.GetNickname() + " " + client.GetSocket().RemoteEndPoint + "] " +
+								"To [" + target.GetNickname() + " " + target.GetSocket().RemoteEndPoint + "] Message: " + privateMessagePacket.Message);
+
+							string message = privateMessagePacket.Message;
+							privateMessagePacket.Message = "[To " + target.GetNickname() + "] " + message;
+							SendDataToSpecificClient(client, privateMessagePacket);
+							privateMessagePacket.Message = "[From " + client.GetNickname() + "] " + message;
+							SendDataToSpecificClient(target, privateMessagePacket);
+							return;
+						}
+					}
+
+					PrintToConsoleAsLogMessage("[Error] [" + client.GetNickname() + " " + client.GetSocket().RemoteEndPoint + "] Tried to send a Private Message to a client that does not exist");
+					SendDataToSpecificClient(client, new Packets.ChatMessagePacket("[Error] User not Found"));
 					break;
 
 				case Packets.Packet.PacketType.Disconnect:

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Drawing;
 
 namespace Packets
 {
@@ -39,6 +40,32 @@ namespace Packets
 		public string Message
 		{
 			get { return message; }
+			protected set { message = value; }
+		}
+	}
+
+	[Serializable()]
+	public class PrivateMessagePacket : Packet
+	{
+		private string message;
+		private string targetUser;
+
+		public PrivateMessagePacket(string message, string targetUser)
+		{
+			this.message = message;
+			this.targetUser = targetUser;
+			m_PacketType = PacketType.PrivateMessage;
+		}
+
+		public string Message
+		{
+			get { return message; }
+			set { message = value; }
+		}
+
+		public string TargetUser
+		{
+			get { return targetUser; }
 			protected set { }
 		}
 	}

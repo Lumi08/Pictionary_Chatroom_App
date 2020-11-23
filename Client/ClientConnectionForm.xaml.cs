@@ -21,6 +21,8 @@ namespace Client
 	/// </summary>
 	public partial class ClientConnectionForm : Window
 	{
+		private bool DEBUG = true;
+
 		private string nickname;
 		private IPAddress ipAddress;
 		private int port;
@@ -29,6 +31,12 @@ namespace Client
 		public ClientConnectionForm()
 		{
 			InitializeComponent();
+
+			if(DEBUG)
+			{
+				IpBox.Text = "192.168.0.13";
+				PortBox.Text = "4444";
+			}
 		}
 
 		private void SubmitButton_Click(object sender, RoutedEventArgs e)

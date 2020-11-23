@@ -8,9 +8,9 @@
         Title="ClientForm" Height="238" Width="250" BorderThickness="0" Margin="10,0,0,0"
         ResizeMode="NoResize">
     <Grid Margin="10">
-        <TextBox x:Name="NicknameBox" Margin="70,51,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="23"/>
+        <TextBox x:Name="NicknameBox" Margin="70,51,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="23" SpellCheck.IsEnabled="True" FontSize="14"/>
         <TextBox x:Name="IpBox" Height="23" Margin="70,79,0,0" TextWrapping="Wrap" VerticalAlignment="Top"/>
-        <TextBox x:Name="PortBox" Height="23" Margin="70,107,0,0" TextWrapping="Wrap" VerticalAlignment="Top"/>
+        <TextBox x:Name="PortBox" Height="23" Margin="70,107,0,0" TextWrapping="Wrap" VerticalAlignment="Top" FontSize="14"/>
         <Label Content="Nickname" HorizontalAlignment="Left" Height="23" Margin="0,51,0,0" VerticalAlignment="Top" Width="64"/>
         <Label Content="IP" HorizontalAlignment="Left" Height="23" Margin="0,79,0,0" VerticalAlignment="Top" Width="39"/>
         <Label Content="Port" HorizontalAlignment="Left" Height="23" Margin="0,107,0,0" VerticalAlignment="Top" Width="39"/>

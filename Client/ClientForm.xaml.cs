@@ -19,7 +19,7 @@ namespace Client
 	/// </summary>
 	public partial class ClientForm : Window
 	{
-		private string VERSION = "0.21";
+		private string VERSION = "0.23";
 
 		private ClientManager client;
 		public bool isConnected;
@@ -65,8 +65,19 @@ namespace Client
 
 		private void SubmitButton_Click(object sender, EventArgs e)
 		{
-			client.SendDataToServer(new Packets.ChatMessagePacket(InputField.Text));
-			InputField.Clear();
+			if(InputField.Text.StartsWith("/"))
+			{
+				string[] split = InputField.Text.Split(' ');
+				string targetUser = split[0].Substring(1);
+				string message = InputField.Text.Substring(2 + targetUser.Length);
+				client.SendDataToServer(new Packets.PrivateMessagePacket(message, targetUser));
+				InputField.Clear();
+			}
+			else
+			{
+				client.SendDataToServer(new Packets.ChatMessagePacket(InputField.Text));
+				InputField.Clear();
+			}
 		}
 
 		private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
