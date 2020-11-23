@@ -19,7 +19,7 @@ namespace Client
 	/// </summary>
 	public partial class ClientForm : Window
 	{
-		private string VERSION = "0.23";
+		private string VERSION = "0.25";
 
 		private ClientManager client;
 		public bool isConnected;
@@ -135,6 +135,18 @@ namespace Client
 				InputField.Margin = new Thickness(0, 0, 110, 0);
 				SubmitButton.Margin = new Thickness(0, 0, 0, 0);
 			}
+		}
+
+		private void ChangeNicknameButton_Click(object sender, RoutedEventArgs e)
+		{
+			if(NicknameChangeBox.Text == "")
+			{
+				UpdateChatWindow("[Error] You Can't Change Your Name to Nothing", Colors.Red);
+				return;
+			}
+
+			client.SendDataToServer(new Packets.NicknamePacket(NicknameChangeBox.Text));
+			NicknameChangeBox.Text = "";
 		}
 	}
 }

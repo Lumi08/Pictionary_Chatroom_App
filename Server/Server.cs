@@ -85,8 +85,16 @@ namespace Server
 			{
 				case Packets.Packet.PacketType.Nickname:
 					Packets.NicknamePacket nicknamePacket = data as Packets.NicknamePacket;
+					if(nicknamePacket.Name == client.GetNickname())
+					{
+						SendDataToSpecificClient(client, new Packets.ChatMessagePacket("[Error] You Can't Change Your Name to the Same Name"));
+						return;
+					}
+					
+					PrintToConsoleAsLogMessage("[" + nicknamePacket.m_PacketType + "] from: " + client.GetNickname() + " data: " + nicknamePacket.Name);
+					PrintToConsoleAsLogMessage("[" + client.GetNickname() + "] Changed Name to " + nicknamePacket.Name);
+					BroadcastDataToAllClients(new Packets.ChatMessagePacket("[Server] " + client.GetNickname() + " Changed Name to " + nicknamePacket.Name));
 					client.SetNickname(nicknamePacket.Name);
-					PrintToConsoleAsLogMessage(nicknamePacket.m_PacketType + " from: " + client.GetNickname() + " data: " + nicknamePacket.Name);
 					break;
 
 				case Packets.Packet.PacketType.ChatMessage:

@@ -31,5 +31,21 @@
         <Button x:Name="DisconnectButton" Content="Disconnect" Margin="0,0,190,370" 
                 Click="DisconnectButton_Click" Visibility="Hidden" Background="#FFAA5B5B"/>
 
+        <Button x:Name="ChangeNicknameButton" Content="Change Nickname" Margin="384,58,10,0" VerticalAlignment="Top" Height="23" Click="ChangeNicknameButton_Click"/>
+        <TextBox x:Name="NicknameChangeBox" Height="23" Margin="384,30,10,0" TextWrapping="Wrap" VerticalAlignment="Top" FontSize="14"/>
+        <TextBlock IsHitTestVisible="False" Text="Enter New Nickname" Margin="384,34,10,0" Foreground="DarkGray" VerticalAlignment="Top" TextAlignment="Center">
+            <TextBlock.Style>
+                <Style TargetType="{x:Type TextBlock}">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Text, ElementName=NicknameChangeBox}" Value="">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+        <Label Content="Settings" Margin="440,-1,40,0" VerticalAlignment="Top" FontSize="14"/>
+
     </Grid>
 </Window>
