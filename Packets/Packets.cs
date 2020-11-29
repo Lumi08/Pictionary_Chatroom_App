@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Drawing;
+using System.Net;
 
 namespace Packets
 {
@@ -14,7 +12,8 @@ namespace Packets
 			ChatMessage,
 			PrivateMessage,
 			Nickname,
-			Disconnect
+			Disconnect,
+			Login
 		}
 
 		private PacketType _packetType;
@@ -94,6 +93,24 @@ namespace Packets
 		public DisconnectPacket()
 		{
 			m_PacketType = PacketType.Disconnect;
+		}
+	}
+
+	[Serializable()]
+	public class LoginPacket : Packet
+	{
+		private IPEndPoint endPoint;
+
+		public LoginPacket(IPEndPoint endPoint)
+		{
+			m_PacketType = PacketType.Login;
+			this.endPoint = endPoint;
+		}
+
+		public IPEndPoint Endpoint
+		{
+			get { return endPoint; }
+			set { }
 		}
 	}
 }

@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Threading;
 using System.Net.Sockets;
 using System.Net;
@@ -19,35 +15,26 @@ namespace Client
 
 		//Network
 		private TcpClient tcpClient;
+		private UdpClient udpClient;
 		private NetworkStream stream;
 		private BinaryReader reader;
 		private BinaryWriter writer;
 		private BinaryFormatter formatter;
 
-		private Thread networkProcessingThread;
+		private Thread tcpNetworkProcessingThread;
+		private Thread udpNetworkProcessingThread;
 		//private Thread formThread;
 		public bool inApp;
 
 		public ClientManager()
 		{
 			clientForm = new ClientForm(this);
-			Start();
-		}
-
-		public void Start()
-		{
-			networkProcessingThread = new Thread(() => { Run(); });
-			//tcpClient = new TcpClient();
 			ShowForm(clientForm);
 		}
 
-		public void Run()
+		public void Login()
 		{
-			Packets.Packet serverResponse;
-			while ((serverResponse = ReadDataFromserver()) != null)
-			{
-				ProcessServerResponse(serverResponse);
-			}
+			TcpSendDataToServer(new Packets.LoginPacket((IPEndPoint)udpClient.Client.LocalEndPoint));
 		}
 
 		public bool ConnectToServer(IPEndPoint iPEndPoint)
@@ -60,7 +47,11 @@ namespace Client
 				formatter = new BinaryFormatter();
 				reader = new BinaryReader(stream);
 				writer = new BinaryWriter(stream);
-				networkProcessingThread = new Thread(() => { Run(); });
+				udpClient = new UdpClient();
+				udpClient.Connect(iPEndPoint);
+				tcpNetworkProcessingThread = new Thread(() => { TcpProcessServerResponse(); });
+				udpNetworkProcessingThread = new Thread(() => { UdpProccessServerResponse(); });
+				Login();
 
 				return true;
 			}
@@ -75,9 +66,10 @@ namespace Client
 		{
 			if (ConnectToServer(iPEndPoint))
 			{
-				SendDataToServer(new Packets.NicknamePacket(nickname));
+				TcpSendDataToServer(new Packets.NicknamePacket(nickname));
 
-				networkProcessingThread.Start();
+				tcpNetworkProcessingThread.Start();
+				udpNetworkProcessingThread.Start();
 				return true;
 			}
 			else
@@ -88,56 +80,71 @@ namespace Client
 			return false;
 		}
 
-		public void ProcessServerResponse(Packets.Packet serverResponse)
+		private void UdpProccessServerResponse()
 		{
-			switch(serverResponse.m_PacketType)
+			try
 			{
-				case Packets.Packet.PacketType.ChatMessage:
-					Packets.ChatMessagePacket chatPacket = serverResponse as Packets.ChatMessagePacket;
-					clientForm.UpdateChatWindow(chatPacket.Message, Colors.Black);
-					break;
+				IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, 0);
+				while (true)
+				{
+					byte[] bytes = udpClient.Receive(ref endPoint);
+					MemoryStream memoryStream = new MemoryStream(bytes);
+					Packets.Packet recievedPacket = formatter.Deserialize(memoryStream) as Packets.Packet;
 
-				case Packets.Packet.PacketType.PrivateMessage:
-					Packets.PrivateMessagePacket privateMessagePacket = serverResponse as Packets.PrivateMessagePacket;
-					clientForm.UpdateChatWindow(privateMessagePacket.Message, Colors.DeepPink);
-					break;
-
-				case Packets.Packet.PacketType.Disconnect:
-					clientForm.ServerFullLogic();
-					Close();
-					break;
-					
+					switch (recievedPacket.m_PacketType)
+					{
+						case Packets.Packet.PacketType.ChatMessage:
+							Packets.ChatMessagePacket chatPacket = recievedPacket as Packets.ChatMessagePacket;
+							clientForm.UpdateChatWindow(chatPacket.Message, Colors.Black);
+							break;
+					}
+				}
 			}
-
-
-			/*string[] dataArray = serverResponse.Split(' ');
-			string serverProcess = dataArray[0];
-			string serverData = serverResponse.Substring(serverProcess.Length + 1);
-
-			if (serverProcess == "/server.message")
+			catch(SocketException e)
 			{
-				clientForm.UpdateChatWindow(serverData);
+				Console.WriteLine("Client UDP Read Method Exception: " + e.Message);
 			}
-
-			if (serverProcess == "/server.clientlist")
-			{
-				//clientForm.UpdateClientsOnlineBox(serverData);
-			}
-
-			if (serverProcess == "/server.full")
-			{
-				networkProcessingThread.Abort();
-				//mainWindow.Close();
-				Close();
-			}*/
 		}
 
-		public void SendDataToServer(Packets.Packet packet)
+		private void TcpProcessServerResponse()
+		{
+			Packets.Packet serverResponse;
+			while ((serverResponse = TcpReadDataFromserver()) != null)
+			{
+				switch (serverResponse.m_PacketType)
+				{
+					case Packets.Packet.PacketType.ChatMessage:
+						Packets.ChatMessagePacket chatPacket = serverResponse as Packets.ChatMessagePacket;
+						clientForm.UpdateChatWindow(chatPacket.Message, Colors.Black);
+						break;
+
+					case Packets.Packet.PacketType.PrivateMessage:
+						Packets.PrivateMessagePacket privateMessagePacket = serverResponse as Packets.PrivateMessagePacket;
+						clientForm.UpdateChatWindow(privateMessagePacket.Message, Colors.DeepPink);
+						break;
+
+					case Packets.Packet.PacketType.Disconnect:
+						clientForm.ServerFullLogic();
+						Close();
+						break;
+
+				}
+			}
+		}
+
+		public void UdpSendDataToServer(Packets.Packet packet)
 		{
 			MemoryStream memoryStream = new MemoryStream();
-
 			formatter.Serialize(memoryStream, packet);
+			byte[] buffer = memoryStream.GetBuffer();
 
+			udpClient.Send(buffer, buffer.Length);
+		}
+
+		public void TcpSendDataToServer(Packets.Packet packet)
+		{
+			MemoryStream memoryStream = new MemoryStream();
+			formatter.Serialize(memoryStream, packet);
 			byte[] buffer = memoryStream.GetBuffer();
 
 			writer.Write(buffer.Length);
@@ -145,7 +152,7 @@ namespace Client
 			writer.Flush();
 		}
 
-		public Packets.Packet ReadDataFromserver()
+		public Packets.Packet TcpReadDataFromserver()
 		{
 			int numberOfBytes;
 			if ((numberOfBytes = reader.ReadInt32()) != -1)
@@ -164,10 +171,11 @@ namespace Client
 
 		public void Close()
 		{
-			networkProcessingThread.Abort();
+			tcpNetworkProcessingThread.Abort();
 			if(clientForm.isConnected)
 			{
-				SendDataToServer(new Packets.DisconnectPacket());
+				TcpSendDataToServer(new Packets.DisconnectPacket());
+				udpClient.Close();
 				tcpClient.Close();
 			}
 		}

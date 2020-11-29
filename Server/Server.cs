@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Net;
 using System.Net.Sockets;
-using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 
 namespace Server
@@ -14,12 +13,14 @@ namespace Server
 	{
 		//Locals
 		private TcpListener tcpListener;
+		private UdpClient udpListener;
 		private List<Thread> threads = new List<Thread>();
 		private List<ConnectedClient> connectedClients = new List<ConnectedClient>();
 
 		public Server(string ipAddress, int port)
 		{
 			tcpListener = new TcpListener(IPAddress.Parse(ipAddress), port);
+			udpListener = new UdpClient(port);
 		}
 
 		public void Start()
@@ -27,6 +28,8 @@ namespace Server
 			try
 			{
 				tcpListener.Start();
+				Thread udpListenThread = new Thread(() => { UdpListen(); });
+				udpListenThread.Start();
 			}
 			catch(Exception e)
 			{
@@ -39,8 +42,7 @@ namespace Server
 			PrintToConsoleAsLogMessage("Server Open to Client Connections");
 			
 			while (true)
-			{
-				
+			{	
 				Socket clientSocket = tcpListener.AcceptSocket();
 				ConnectedClient newClient = new ConnectedClient(clientSocket);
 
@@ -48,38 +50,60 @@ namespace Server
 				{
 					connectedClients.Add(newClient);
 					PrintToConsoleAsLogMessage(connectedClients.Last().GetNickname() + " Joined [" + clientSocket.RemoteEndPoint + "]");
-					BroadcastDataToAllClients(new Packets.ChatMessagePacket("[Server] " + connectedClients.Last().GetNickname() + " has joined the chat!"));
+					TcpBroadcastDataToAllClients(new Packets.ChatMessagePacket("[Server] " + connectedClients.Last().GetNickname() + " has joined the chat!"));
 					//UpdateClientsOnlineBox();
 					threads.Add(new Thread(() => { ClientMethod(connectedClients.Last()); }));
 					threads.Last().Start();
 				}
 				else
 				{
-					SendDataToSpecificClient(newClient, new Packets.DisconnectPacket());
+					TcpSendDataToSpecificClient(newClient, new Packets.DisconnectPacket());
 					Thread test = new Thread(() => { ClientMethod(newClient); });
 				}
 			}
 
 		}
 
-		public void Stop()
+		private void UdpListen()
 		{
-			tcpListener.Stop();
+			try
+			{
+				IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, 0);
+				while (true)
+				{
+					BinaryFormatter formatter = new BinaryFormatter(); 
+					byte[] bytes = udpListener.Receive(ref endPoint);
+					MemoryStream memoryStream = new MemoryStream(bytes);
+					Packets.Packet recievedPacket = formatter.Deserialize(memoryStream) as Packets.Packet;
+
+					foreach (ConnectedClient client in connectedClients)
+					{
+						if (endPoint.ToString() == client.endPoint.ToString())
+						{
+							udpListener.Send(bytes, bytes.Length, client.endPoint);
+						}
+					}
+				}
+			}
+			catch (SocketException e)
+			{
+				Console.WriteLine("Server UDP Read Method Exception: " + e.Message);
+			}
 		}
 
 		private void ClientMethod(ConnectedClient connectedClient)
 		{
 			Packets.Packet recievedDataFromClientSocket;
 
-			while((recievedDataFromClientSocket = connectedClient.Read()) != null)
+			while((recievedDataFromClientSocket = connectedClient.TcpRead()) != null)
 			{
-				ProcessDataSentFromClient(recievedDataFromClientSocket, connectedClient);
+				TcpProcessDataSentFromClient(recievedDataFromClientSocket, connectedClient);
 			}
 
 			connectedClient.CloseConnection();
 		}
 
-		private void ProcessDataSentFromClient(Packets.Packet data, ConnectedClient client)
+		private void TcpProcessDataSentFromClient(Packets.Packet data, ConnectedClient client)
 		{
 			switch (data.m_PacketType)
 			{
@@ -87,20 +111,20 @@ namespace Server
 					Packets.NicknamePacket nicknamePacket = data as Packets.NicknamePacket;
 					if(nicknamePacket.Name == client.GetNickname())
 					{
-						SendDataToSpecificClient(client, new Packets.ChatMessagePacket("[Error] You Can't Change Your Name to the Same Name"));
+						TcpSendDataToSpecificClient(client, new Packets.ChatMessagePacket("[Error] You Can't Change Your Name to the Same Name"));
 						return;
 					}
 					
-					PrintToConsoleAsLogMessage("[" + nicknamePacket.m_PacketType + "] from: " + client.GetNickname() + " data: " + nicknamePacket.Name);
-					PrintToConsoleAsLogMessage("[" + client.GetNickname() + "] Changed Name to " + nicknamePacket.Name);
-					BroadcastDataToAllClients(new Packets.ChatMessagePacket("[Server] " + client.GetNickname() + " Changed Name to " + nicknamePacket.Name));
+					PrintToConsoleAsLogMessage("[TCP] [" + nicknamePacket.m_PacketType + "] from: " + client.GetNickname() + " data: " + nicknamePacket.Name);
+					PrintToConsoleAsLogMessage("[TCP] [" + client.GetNickname() + "] Changed Name to " + nicknamePacket.Name);
+					TcpBroadcastDataToAllClients(new Packets.ChatMessagePacket("[Server] " + client.GetNickname() + " Changed Name to " + nicknamePacket.Name));
 					client.SetNickname(nicknamePacket.Name);
 					break;
 
 				case Packets.Packet.PacketType.ChatMessage:
 					Packets.ChatMessagePacket messagePacket = data as Packets.ChatMessagePacket;
-					BroadcastDataToAllClients(new Packets.ChatMessagePacket("[" + client.GetNickname() + "] " + messagePacket.Message));
-					PrintToConsoleAsLogMessage("[" + messagePacket.m_PacketType + "] from [" + client.GetNickname() + " " + client.GetSocket().RemoteEndPoint + "] Message: " + messagePacket.Message);
+					TcpBroadcastDataToAllClients(new Packets.ChatMessagePacket("[" + client.GetNickname() + "] " + messagePacket.Message));
+					PrintToConsoleAsLogMessage("[TCP] [" + messagePacket.m_PacketType + "] from [" + client.GetNickname() + " " + client.GetSocket().RemoteEndPoint + "] Message: " + messagePacket.Message);
 					break;
 
 				case Packets.Packet.PacketType.PrivateMessage:
@@ -112,39 +136,45 @@ namespace Server
 						{
 							if(target == client)
 							{
-								PrintToConsoleAsLogMessage("[Error] [" + client.GetNickname() + " " + client.GetSocket().RemoteEndPoint + "] Tried to send a Private Message to Themself");
-								SendDataToSpecificClient(client, new Packets.ChatMessagePacket("[Error] You Can't Message Yourself"));
+								PrintToConsoleAsLogMessage("[TCP] [Error] [" + client.GetNickname() + " " + client.GetSocket().RemoteEndPoint + "] Tried to send a Private Message to Themself");
+								TcpSendDataToSpecificClient(client, new Packets.ChatMessagePacket("[Error] You Can't Message Yourself"));
 								return;
 							}
 
-							PrintToConsoleAsLogMessage("[" + privateMessagePacket.m_PacketType + "] from [" + client.GetNickname() + " " + client.GetSocket().RemoteEndPoint + "] " +
+							PrintToConsoleAsLogMessage("[TCP] [" + privateMessagePacket.m_PacketType + "] from [" + client.GetNickname() + " " + client.GetSocket().RemoteEndPoint + "] " +
 								"To [" + target.GetNickname() + " " + target.GetSocket().RemoteEndPoint + "] Message: " + privateMessagePacket.Message);
 
 							string message = privateMessagePacket.Message;
 							privateMessagePacket.Message = "[To " + target.GetNickname() + "] " + message;
-							SendDataToSpecificClient(client, privateMessagePacket);
+							TcpSendDataToSpecificClient(client, privateMessagePacket);
 							privateMessagePacket.Message = "[From " + client.GetNickname() + "] " + message;
-							SendDataToSpecificClient(target, privateMessagePacket);
+							TcpSendDataToSpecificClient(target, privateMessagePacket);
 							return;
 						}
 					}
 
-					PrintToConsoleAsLogMessage("[Error] [" + client.GetNickname() + " " + client.GetSocket().RemoteEndPoint + "] Tried to send a Private Message to a client that does not exist");
-					SendDataToSpecificClient(client, new Packets.ChatMessagePacket("[Error] User not Found"));
+					PrintToConsoleAsLogMessage("[TCP] [Error] [" + client.GetNickname() + " " + client.GetSocket().RemoteEndPoint + "] Tried to send a Private Message to a client that does not exist");
+					TcpSendDataToSpecificClient(client, new Packets.ChatMessagePacket("[Error] User not Found"));
 					break;
 
+				case Packets.Packet.PacketType.Login:
+					Packets.LoginPacket loginPacket = data as Packets.LoginPacket;
+					client.endPoint = loginPacket.Endpoint;
+					PrintToConsoleAsLogMessage("[TCP] New Login from " + loginPacket.Endpoint);
+					break;
+				
 				case Packets.Packet.PacketType.Disconnect:
 					threads.RemoveAt(connectedClients.IndexOf(client));
 					connectedClients.Remove(client);
-					PrintToConsoleAsLogMessage(client.GetNickname() + " Left The Server. [" + client.GetSocket().RemoteEndPoint + "]");
-					BroadcastDataToAllClients(new Packets.ChatMessagePacket("[Server] " + client.GetNickname() + " has left the chat!"));
+					PrintToConsoleAsLogMessage("[TCP] " + client.GetNickname() + " Left The Server. [" + client.GetSocket().RemoteEndPoint + "]");
+					TcpBroadcastDataToAllClients(new Packets.ChatMessagePacket("[Server] " + client.GetNickname() + " has left the chat!"));
 					client.CloseConnection();
 					//UpdateClientsOnlineBox();
 					break;
 			}
 		}
 
-		private void BroadcastDataToAllClients(Packets.Packet packet)
+		private void TcpBroadcastDataToAllClients(Packets.Packet packet)
 		{
 			foreach(ConnectedClient client in connectedClients)
 			{
@@ -152,7 +182,7 @@ namespace Server
 			}
 		}
 
-		private void SendDataToSpecificClient(ConnectedClient client, Packets.Packet packet)
+		private void TcpSendDataToSpecificClient(ConnectedClient client, Packets.Packet packet)
 		{
 			client.Send(packet);
 		}
@@ -167,6 +197,11 @@ namespace Server
 			}
 
 			BroadcastDataToAllClients(clients);*/
+		}
+
+		public void Stop()
+		{
+			tcpListener.Stop();
 		}
 
 		public void PrintToConsoleAsLogMessage(string x)

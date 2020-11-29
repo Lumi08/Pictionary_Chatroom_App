@@ -12,6 +12,8 @@ namespace Server
 { 
 	class ConnectedClient
 	{
+		public IPEndPoint endPoint;
+
 		private Socket socket;
 		private NetworkStream stream;
 		private BinaryWriter writer;
@@ -28,9 +30,6 @@ namespace Server
 			writer = new BinaryWriter(stream);
 			reader = new BinaryReader(stream);
 			formatter = new BinaryFormatter();
-
-			Packets.NicknamePacket initialNicknamePacket = Read() as Packets.NicknamePacket;
-			nickname = initialNicknamePacket.Name;
 		}
 
 		public void Send(Packets.Packet packet)
@@ -46,7 +45,7 @@ namespace Server
 			writer.Flush();
 		}
 
-		public Packets.Packet Read()
+		public Packets.Packet TcpRead()
 		{
 			int numberOfBytes;
 

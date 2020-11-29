@@ -1,16 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace Client
 {
@@ -19,7 +10,7 @@ namespace Client
 	/// </summary>
 	public partial class ClientForm : Window
 	{
-		private string VERSION = "0.25";
+		private string VERSION = "0.26";
 
 		private ClientManager client;
 		public bool isConnected;
@@ -68,14 +59,19 @@ namespace Client
 			if(InputField.Text.StartsWith("/"))
 			{
 				string[] split = InputField.Text.Split(' ');
+				if (split.Length < 2)
+				{
+					UpdateChatWindow("[Error] Missing Message Args", Colors.Red);
+					return;
+				}
 				string targetUser = split[0].Substring(1);
 				string message = InputField.Text.Substring(2 + targetUser.Length);
-				client.SendDataToServer(new Packets.PrivateMessagePacket(message, targetUser));
+				client.TcpSendDataToServer(new Packets.PrivateMessagePacket(message, targetUser));
 				InputField.Clear();
 			}
 			else
 			{
-				client.SendDataToServer(new Packets.ChatMessagePacket(InputField.Text));
+				client.UdpSendDataToServer(new Packets.ChatMessagePacket(InputField.Text));
 				InputField.Clear();
 			}
 		}
@@ -145,7 +141,7 @@ namespace Client
 				return;
 			}
 
-			client.SendDataToServer(new Packets.NicknamePacket(NicknameChangeBox.Text));
+			client.TcpSendDataToServer(new Packets.NicknamePacket(NicknameChangeBox.Text));
 			NicknameChangeBox.Text = "";
 		}
 	}
