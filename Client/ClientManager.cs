@@ -5,6 +5,8 @@ using System.Net;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Windows.Media;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Client
 {
@@ -21,6 +23,12 @@ namespace Client
 		private BinaryWriter writer;
 		private BinaryFormatter formatter;
 
+		//Security
+		private RSACryptoServiceProvider rsaProvider;
+		private RSAParameters publicKey;
+		private RSAParameters privateKey;
+		private RSAParameters serverKey;
+
 		private Thread tcpNetworkProcessingThread;
 		private Thread udpNetworkProcessingThread;
 		//private Thread formThread;
@@ -29,12 +37,17 @@ namespace Client
 		public ClientManager()
 		{
 			clientForm = new ClientForm(this);
+			rsaProvider = new RSACryptoServiceProvider(1024);
+			publicKey = rsaProvider.ExportParameters(false);
+			privateKey = rsaProvider.ExportParameters(true);
+
 			ShowForm(clientForm);
 		}
 
-		public void Login()
+		//Connections
+		public void Login(string nickname)
 		{
-			TcpSendDataToServer(new Packets.LoginPacket((IPEndPoint)udpClient.Client.LocalEndPoint));
+			TcpSendDataToServer(new Packets.LoginPacket(nickname, (IPEndPoint)udpClient.Client.LocalEndPoint, publicKey));
 		}
 
 		public bool ConnectToServer(IPEndPoint iPEndPoint)
@@ -51,7 +64,6 @@ namespace Client
 				udpClient.Connect(iPEndPoint);
 				tcpNetworkProcessingThread = new Thread(() => { TcpProcessServerResponse(); });
 				udpNetworkProcessingThread = new Thread(() => { UdpProccessServerResponse(); });
-				Login();
 
 				return true;
 			}
@@ -66,7 +78,7 @@ namespace Client
 		{
 			if (ConnectToServer(iPEndPoint))
 			{
-				TcpSendDataToServer(new Packets.NicknamePacket(nickname));
+				Login(nickname);
 
 				tcpNetworkProcessingThread.Start();
 				udpNetworkProcessingThread.Start();
@@ -80,6 +92,7 @@ namespace Client
 			return false;
 		}
 
+		//Processing server response
 		private void UdpProccessServerResponse()
 		{
 			try
@@ -118,6 +131,11 @@ namespace Client
 						clientForm.UpdateChatWindow(chatPacket.Message, Colors.Black);
 						break;
 
+					case Packets.Packet.PacketType.EncryptedChatMessage:
+						Packets.EncryptedChatMessagePacket encryptedChatPacket = serverResponse as Packets.EncryptedChatMessagePacket;
+						clientForm.UpdateChatWindow(DecryptString(encryptedChatPacket.Data), Colors.Black);
+						break;
+
 					case Packets.Packet.PacketType.PrivateMessage:
 						Packets.PrivateMessagePacket privateMessagePacket = serverResponse as Packets.PrivateMessagePacket;
 						clientForm.UpdateChatWindow(privateMessagePacket.Message, Colors.DeepPink);
@@ -128,10 +146,15 @@ namespace Client
 						Close();
 						break;
 
+					case Packets.Packet.PacketType.KeyPacket:
+						Packets.KeyPacket keyPacket = serverResponse as Packets.KeyPacket;
+						serverKey = keyPacket.Key;
+						break;
 				}
 			}
 		}
 
+		//Server Data management
 		public void UdpSendDataToServer(Packets.Packet packet)
 		{
 			MemoryStream memoryStream = new MemoryStream();
@@ -155,12 +178,14 @@ namespace Client
 		public Packets.Packet TcpReadDataFromserver()
 		{
 			int numberOfBytes;
+
 			if ((numberOfBytes = reader.ReadInt32()) != -1)
 			{
 				byte[] buffer = reader.ReadBytes(numberOfBytes);
 				MemoryStream memoryStream = new MemoryStream(buffer);
 				return formatter.Deserialize(memoryStream) as Packets.Packet;
 			}
+
 			return null;
 		}
 
@@ -169,11 +194,42 @@ namespace Client
 			window.ShowDialog();
 		}
 
+		//Security
+		public byte[] Encrypt(byte[] data)
+		{
+			lock (rsaProvider)
+			{
+				rsaProvider.ImportParameters(serverKey);
+				return rsaProvider.Encrypt(data, true);
+			}
+		}
+
+		private byte[] Decrypt(byte[] data)
+		{
+			lock (rsaProvider)
+			{
+				rsaProvider.ImportParameters(privateKey);
+				return rsaProvider.Decrypt(data, true);
+			}
+		}
+
+		public byte[] EncryptString(string data)
+		{
+			byte[] buffer = Encoding.UTF8.GetBytes(data);
+			return Encrypt(buffer);
+		}
+
+		private string DecryptString(byte[] data)
+		{
+			byte[] buffer = Decrypt(data);
+			return Encoding.UTF8.GetString(buffer);
+		}
+
 		public void Close()
 		{
-			tcpNetworkProcessingThread.Abort();
 			if(clientForm.isConnected)
 			{
+				tcpNetworkProcessingThread.Abort();
 				TcpSendDataToServer(new Packets.DisconnectPacket());
 				udpClient.Close();
 				tcpClient.Close();

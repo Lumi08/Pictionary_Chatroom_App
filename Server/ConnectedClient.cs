@@ -7,6 +7,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Server
 { 
@@ -14,55 +16,117 @@ namespace Server
 	{
 		public IPEndPoint endPoint;
 
+		private object writeLock;
+		private object readLock;
+
 		private Socket socket;
 		private NetworkStream stream;
 		private BinaryWriter writer;
 		private BinaryReader reader;
 		private BinaryFormatter formatter;
 
+		//Security
+		private RSACryptoServiceProvider rsaProvider;
+		private RSAParameters publicKey;
+		private RSAParameters privateKey;
+		private RSAParameters clientKey;
+
 		private string nickname;
 
 		public ConnectedClient(Socket socket)
 		{
 			this.socket = socket;
+			readLock = new object();
+			writeLock = new object();
 
 			stream = new NetworkStream(socket);
 			writer = new BinaryWriter(stream);
 			reader = new BinaryReader(stream);
 			formatter = new BinaryFormatter();
+
+			rsaProvider = new RSACryptoServiceProvider();
+			publicKey = rsaProvider.ExportParameters(false);
+			privateKey = rsaProvider.ExportParameters(true);
 		}
 
-		public void Send(Packets.Packet packet)
+		public void Login(string nickname, IPEndPoint endPoint, RSAParameters publicKey)
 		{
-			MemoryStream memoryStream = new MemoryStream();
+			this.nickname = nickname;
+			this.endPoint = endPoint;
+			clientKey = publicKey;
 
-			formatter.Serialize(memoryStream, packet);
+			TcpSend(new Packets.KeyPacket(this.publicKey));
+		}
 
-			byte[] buffer = memoryStream.GetBuffer();
+		public void TcpSend(Packets.Packet packet)
+		{
+			lock(writeLock)
+			{
+				MemoryStream memoryStream = new MemoryStream();
 
-			writer.Write(buffer.Length);
-			writer.Write(buffer);
-			writer.Flush();
+				formatter.Serialize(memoryStream, packet);
+
+				byte[] buffer = memoryStream.GetBuffer();
+
+				writer.Write(buffer.Length);
+				writer.Write(buffer);
+				writer.Flush();
+			}	
 		}
 
 		public Packets.Packet TcpRead()
 		{
-			int numberOfBytes;
+			lock(readLock)
+			{
+				int numberOfBytes;
 
-			try
-			{
-				if ((numberOfBytes = reader.ReadInt32()) != -1)
+				try
 				{
-					byte[] buffer = reader.ReadBytes(numberOfBytes);
-					MemoryStream memoryStream = new MemoryStream(buffer);
-					return formatter.Deserialize(memoryStream) as Packets.Packet;
+					if ((numberOfBytes = reader.ReadInt32()) != -1)
+					{
+						byte[] buffer = reader.ReadBytes(numberOfBytes);
+						MemoryStream memoryStream = new MemoryStream(buffer);
+						return formatter.Deserialize(memoryStream) as Packets.Packet;
+					}
 				}
+				catch (Exception e)
+				{
+
+				}
+				return null;
 			}
-			catch(Exception e)
+		}
+
+		//Security
+		public byte[] Encrypt(byte[] data)
+		{
+			lock(rsaProvider)
 			{
-				
+				rsaProvider.ImportParameters(clientKey);
+				return rsaProvider.Encrypt(data, true);
 			}
-			return null;
+		}
+
+		public byte[] Decrypt(byte[] data)
+		{
+			lock (rsaProvider)
+			{
+				rsaProvider.ImportParameters(privateKey);
+				return rsaProvider.Decrypt(data, true);
+			}
+		}
+
+		public byte[] EncryptString(string data)
+		{
+			byte[] buffer = Encoding.UTF8.GetBytes(data);
+			return Encrypt(buffer);	
+		}
+
+		public string DecryptString(byte[] data)
+		{
+			byte[] buffer = Decrypt(data);
+			return Encoding.UTF8.GetString(buffer);
+
 		}
 
 		public void CloseConnection()

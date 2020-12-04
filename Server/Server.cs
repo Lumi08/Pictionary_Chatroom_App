@@ -49,8 +49,6 @@ namespace Server
 				if (connectedClients.Count < 3)
 				{
 					connectedClients.Add(newClient);
-					PrintToConsoleAsLogMessage(connectedClients.Last().GetNickname() + " Joined [" + clientSocket.RemoteEndPoint + "]");
-					TcpBroadcastDataToAllClients(new Packets.ChatMessagePacket("[Server] " + connectedClients.Last().GetNickname() + " has joined the chat!"));
 					//UpdateClientsOnlineBox();
 					threads.Add(new Thread(() => { ClientMethod(connectedClients.Last()); }));
 					threads.Last().Start();
@@ -107,6 +105,13 @@ namespace Server
 		{
 			switch (data.m_PacketType)
 			{
+				case Packets.Packet.PacketType.Login:
+					Packets.LoginPacket loginPacket = data as Packets.LoginPacket;
+					client.Login(loginPacket.Nickname, loginPacket.Endpoint, loginPacket.PublicKey);
+					PrintToConsoleAsLogMessage("[TCP] New Login from " + loginPacket.Endpoint);
+					TcpBroadcastDataToAllClients(new Packets.ChatMessagePacket("[Server] " + connectedClients.Last().GetNickname() + " has joined the chat!"));
+					break;
+
 				case Packets.Packet.PacketType.Nickname:
 					Packets.NicknamePacket nicknamePacket = data as Packets.NicknamePacket;
 					if(nicknamePacket.Name == client.GetNickname())
@@ -125,6 +130,13 @@ namespace Server
 					Packets.ChatMessagePacket messagePacket = data as Packets.ChatMessagePacket;
 					TcpBroadcastDataToAllClients(new Packets.ChatMessagePacket("[" + client.GetNickname() + "] " + messagePacket.Message));
 					PrintToConsoleAsLogMessage("[TCP] [" + messagePacket.m_PacketType + "] from [" + client.GetNickname() + " " + client.GetSocket().RemoteEndPoint + "] Message: " + messagePacket.Message);
+					break;
+
+				case Packets.Packet.PacketType.EncryptedChatMessage:
+					Packets.EncryptedChatMessagePacket encryptedMessagePacket = data as Packets.EncryptedChatMessagePacket;
+					string decryptedString = client.DecryptString(encryptedMessagePacket.Data);
+					TcpBroadcastDataToAllClients(new Packets.EncryptedChatMessagePacket(client.EncryptString("[" + client.GetNickname() + "] " + decryptedString)));
+					PrintToConsoleAsLogMessage("[TCP] [" + encryptedMessagePacket.m_PacketType + "] from [" + client.GetNickname() + " " + client.GetSocket().RemoteEndPoint + "] Message: " + decryptedString);
 					break;
 
 				case Packets.Packet.PacketType.PrivateMessage:
@@ -156,12 +168,6 @@ namespace Server
 					PrintToConsoleAsLogMessage("[TCP] [Error] [" + client.GetNickname() + " " + client.GetSocket().RemoteEndPoint + "] Tried to send a Private Message to a client that does not exist");
 					TcpSendDataToSpecificClient(client, new Packets.ChatMessagePacket("[Error] User not Found"));
 					break;
-
-				case Packets.Packet.PacketType.Login:
-					Packets.LoginPacket loginPacket = data as Packets.LoginPacket;
-					client.endPoint = loginPacket.Endpoint;
-					PrintToConsoleAsLogMessage("[TCP] New Login from " + loginPacket.Endpoint);
-					break;
 				
 				case Packets.Packet.PacketType.Disconnect:
 					threads.RemoveAt(connectedClients.IndexOf(client));
@@ -178,13 +184,13 @@ namespace Server
 		{
 			foreach(ConnectedClient client in connectedClients)
 			{
-				client.Send(packet);
+				client.TcpSend(packet);
 			}
 		}
 
 		private void TcpSendDataToSpecificClient(ConnectedClient client, Packets.Packet packet)
 		{
-			client.Send(packet);
+			client.TcpSend(packet);
 		}
 
 		private void UpdateClientsOnlineBox()

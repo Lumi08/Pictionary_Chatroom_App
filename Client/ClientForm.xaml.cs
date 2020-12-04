@@ -10,7 +10,7 @@ namespace Client
 	/// </summary>
 	public partial class ClientForm : Window
 	{
-		private string VERSION = "0.26";
+		private string VERSION = "0.27";
 
 		private ClientManager client;
 		public bool isConnected;
@@ -71,14 +71,9 @@ namespace Client
 			}
 			else
 			{
-				client.UdpSendDataToServer(new Packets.ChatMessagePacket(InputField.Text));
+				client.TcpSendDataToServer(new Packets.EncryptedChatMessagePacket(client.EncryptString(InputField.Text)));
 				InputField.Clear();
 			}
-		}
-
-		private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
-		{
-			client.Close();
 		}
 
 		private void ConnectButton_Click(object sender, EventArgs e)
@@ -143,6 +138,11 @@ namespace Client
 
 			client.TcpSendDataToServer(new Packets.NicknamePacket(NicknameChangeBox.Text));
 			NicknameChangeBox.Text = "";
+		}
+
+		private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+		{
+			client.Close();
 		}
 	}
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using System.Security.Cryptography;
 
 namespace Packets
 {
@@ -10,10 +11,12 @@ namespace Packets
 		public enum PacketType
 		{
 			ChatMessage,
+			EncryptedChatMessage,
 			PrivateMessage,
 			Nickname,
 			Disconnect,
-			Login
+			Login,
+			KeyPacket
 		}
 
 		private PacketType _packetType;
@@ -40,6 +43,24 @@ namespace Packets
 		{
 			get { return message; }
 			protected set { message = value; }
+		}
+	}
+
+	[Serializable()]
+	public class EncryptedChatMessagePacket : Packet
+	{
+		private byte[] data;
+
+		public EncryptedChatMessagePacket(byte[] data)
+		{
+			this.data = data;
+			m_PacketType = PacketType.EncryptedChatMessage;
+		}
+
+		public byte[] Data
+		{
+			get { return data; }
+			protected set { data = value; }
 		}
 	}
 
@@ -99,17 +120,51 @@ namespace Packets
 	[Serializable()]
 	public class LoginPacket : Packet
 	{
+		private string nickname;
 		private IPEndPoint endPoint;
+		private RSAParameters publicKey;
 
-		public LoginPacket(IPEndPoint endPoint)
+		public LoginPacket(string nickname, IPEndPoint endPoint, RSAParameters publicKey)
 		{
 			m_PacketType = PacketType.Login;
+			this.nickname = nickname;
 			this.endPoint = endPoint;
+			this.publicKey = publicKey;
 		}
 
 		public IPEndPoint Endpoint
 		{
 			get { return endPoint; }
+			set { }
+		}
+
+		public RSAParameters PublicKey
+		{
+			get { return publicKey; }
+			set { }
+		}
+
+		public string Nickname
+		{
+			get { return nickname; }
+			set { }
+		}
+	}
+
+	[Serializable()]
+	public class KeyPacket : Packet
+	{
+		private RSAParameters key;
+
+		public KeyPacket(RSAParameters key)
+		{
+			m_PacketType = PacketType.KeyPacket;
+			this.key = key;
+		}
+
+		public RSAParameters Key
+		{
+			get { return key; }
 			set { }
 		}
 	}
