@@ -142,6 +142,11 @@ namespace Client
 						Packets.KeyPacket keyPacket = serverResponse as Packets.KeyPacket;
 						serverKey = keyPacket.Key;
 						break;
+
+					case Packets.Packet.PacketType.ClientList:
+						Packets.ClientsPacket clientsPacket = serverResponse as Packets.ClientsPacket;
+						clientForm.UpdateClientWindow(clientsPacket.Clients);
+						break;
 				}
 			}
 		}
@@ -171,12 +176,15 @@ namespace Client
 		{
 			int numberOfBytes;
 
-			if ((numberOfBytes = reader.ReadInt32()) != -1)
+			try
 			{
-				byte[] buffer = reader.ReadBytes(numberOfBytes);
-				MemoryStream memoryStream = new MemoryStream(buffer);
-				return formatter.Deserialize(memoryStream) as Packets.Packet;
-			}
+				if ((numberOfBytes = reader.ReadInt32()) != -1)
+				{
+					byte[] buffer = reader.ReadBytes(numberOfBytes);
+					MemoryStream memoryStream = new MemoryStream(buffer);
+					return formatter.Deserialize(memoryStream) as Packets.Packet;
+				}
+			} catch (Exception e){ }
 
 			return null;
 		}

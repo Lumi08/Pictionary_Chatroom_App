@@ -15,7 +15,8 @@ namespace Packets
 			Nickname,
 			Disconnect,
 			Login,
-			KeyPacket
+			KeyPacket,
+			ClientList
 		}
 
 		private PacketType _packetType;
@@ -95,6 +96,24 @@ namespace Packets
 		public DisconnectPacket()
 		{
 			m_PacketType = PacketType.Disconnect;
+		}
+	}
+
+	[Serializable()]
+	public class ClientsPacket : Packet
+	{
+		private string[] clients;
+
+		public ClientsPacket(string[] clients)
+		{
+			m_PacketType = PacketType.ClientList;
+			this.clients = clients;
+		}
+
+		public string[] Clients
+		{
+			get { return clients; }
+			set { }
 		}
 	}
 

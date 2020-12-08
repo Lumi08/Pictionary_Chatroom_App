@@ -17,10 +17,13 @@ namespace Server
 		private List<Thread> threads = new List<Thread>();
 		private List<ConnectedClient> connectedClients = new List<ConnectedClient>();
 
-		public Server(string ipAddress, int port)
+		private int maxClients;
+
+		public Server(string ipAddress, int port, int maxClients)
 		{
 			tcpListener = new TcpListener(IPAddress.Parse(ipAddress), port);
 			udpListener = new UdpClient(port);
+			this.maxClients = maxClients;
 		}
 
 		public void Start()
@@ -46,10 +49,9 @@ namespace Server
 				Socket clientSocket = tcpListener.AcceptSocket();
 				ConnectedClient newClient = new ConnectedClient(clientSocket);
 
-				if (connectedClients.Count < 3)
+				if (connectedClients.Count < maxClients)
 				{
 					connectedClients.Add(newClient);
-					//UpdateClientsOnlineBox();
 					threads.Add(new Thread(() => { ClientMethod(connectedClients.Last()); }));
 					threads.Last().Start();
 				}
@@ -109,6 +111,7 @@ namespace Server
 					Packets.LoginPacket loginPacket = data as Packets.LoginPacket;
 					client.Login(loginPacket.Nickname, loginPacket.Endpoint, loginPacket.PublicKey);
 					PrintToConsoleAsLogMessage("[TCP] New Login from " + loginPacket.Endpoint);
+					UpdateClientsOnlineBox();
 					SendEncryptedChatPacket("[Server] " + connectedClients.Last().GetNickname() + " has joined the chat!");
 					break;
 
@@ -122,6 +125,7 @@ namespace Server
 					
 					PrintToConsoleAsLogMessage("[TCP] [" + nicknamePacket.m_PacketType + "] from: " + client.GetNickname() + " data: " + nicknamePacket.Name);
 					PrintToConsoleAsLogMessage("[TCP] [" + client.GetNickname() + "] Changed Name to " + nicknamePacket.Name);
+					UpdateClientsOnlineBox();
 					SendEncryptedChatPacket("[Server] " + client.GetNickname() + " Changed Name to " + nicknamePacket.Name);
 					client.SetNickname(nicknamePacket.Name);
 					break;
@@ -169,7 +173,7 @@ namespace Server
 					PrintToConsoleAsLogMessage("[TCP] " + client.GetNickname() + " Left The Server. [" + client.GetSocket().RemoteEndPoint + "]");
 					SendEncryptedChatPacket("[Server] " + client.GetNickname() + " has left the chat!");
 					client.CloseConnection();
-					//UpdateClientsOnlineBox();
+					UpdateClientsOnlineBox();
 					break;
 			}
 		}
@@ -197,14 +201,16 @@ namespace Server
 
 		private void UpdateClientsOnlineBox()
 		{
-			/*string clients = "/server.clientlist";
+			string[] clients = new string[maxClients];
 
-			foreach(ConnectedClient onlineClient in connectedClients)
+			int i = 0;
+			foreach(ConnectedClient client in connectedClients)
 			{
-				clients += " " + onlineClient.GetNickname();
+				clients[i] = client.GetNickname();
+				i++;
 			}
 
-			BroadcastDataToAllClients(clients);*/
+			TcpBroadcastDataToAllClients(new Packets.ClientsPacket(clients));
 		}
 
 		public void Stop()

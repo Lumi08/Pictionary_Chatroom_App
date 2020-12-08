@@ -38,7 +38,18 @@ namespace Client
 				MessageWindow.Document.Blocks.Add(paragraph);
 
 				MessageWindow.ScrollToEnd();
+			});
+		}
 
+		public void UpdateClientWindow(string[] clients)
+		{
+			ClientsConnectedTextbox.Dispatcher.Invoke(() =>
+			{
+				ClientsConnectedTextbox.Text = "";
+				foreach(string client in clients)
+				{
+					ClientsConnectedTextbox.Text += (client + Environment.NewLine);
+				}
 			});
 		}
 
@@ -104,6 +115,7 @@ namespace Client
 			SubmitButton.IsEnabled = false;
 			NicknameChangeBox.IsEnabled = false;
 			ChangeNicknameButton.IsEnabled = false;
+			ClientsConnectedTextbox.Clear();
 			isConnected = false;
 		}
 
@@ -112,7 +124,7 @@ namespace Client
 			if (clientsOpen)
 			{
 				clientsOpen = false;
-				ClientsConnectedBox.Visibility = Visibility.Hidden;
+				ClientsConnectedTextbox.Visibility = Visibility.Hidden;
 				ClientsLabel.Visibility = Visibility.Hidden;
 			}
 
@@ -152,14 +164,14 @@ namespace Client
 
 			if (clientsOpen)
 			{
-				ClientsConnectedBox.Visibility = Visibility.Visible;
+				ClientsConnectedTextbox.Visibility = Visibility.Visible;
 				ClientsLabel.Visibility = Visibility.Visible;
 
 				OpenSidePannel();
 			}
 			else
 			{
-				ClientsConnectedBox.Visibility = Visibility.Hidden;
+				ClientsConnectedTextbox.Visibility = Visibility.Hidden;
 				ClientsLabel.Visibility = Visibility.Hidden;
 
 				CloseSidePannel();
