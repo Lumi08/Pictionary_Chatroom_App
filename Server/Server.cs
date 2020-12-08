@@ -109,34 +109,28 @@ namespace Server
 					Packets.LoginPacket loginPacket = data as Packets.LoginPacket;
 					client.Login(loginPacket.Nickname, loginPacket.Endpoint, loginPacket.PublicKey);
 					PrintToConsoleAsLogMessage("[TCP] New Login from " + loginPacket.Endpoint);
-					TcpBroadcastDataToAllClients(new Packets.ChatMessagePacket("[Server] " + connectedClients.Last().GetNickname() + " has joined the chat!"));
+					SendEncryptedChatPacket("[Server] " + connectedClients.Last().GetNickname() + " has joined the chat!");
 					break;
 
 				case Packets.Packet.PacketType.Nickname:
 					Packets.NicknamePacket nicknamePacket = data as Packets.NicknamePacket;
 					if(nicknamePacket.Name == client.GetNickname())
 					{
-						TcpSendDataToSpecificClient(client, new Packets.ChatMessagePacket("[Error] You Can't Change Your Name to the Same Name"));
+						TcpSendDataToSpecificClient(client, new Packets.ChatMessagePacket(client.EncryptString("[Error] You Can't Change Your Name to the Same Name")));
 						return;
 					}
 					
 					PrintToConsoleAsLogMessage("[TCP] [" + nicknamePacket.m_PacketType + "] from: " + client.GetNickname() + " data: " + nicknamePacket.Name);
 					PrintToConsoleAsLogMessage("[TCP] [" + client.GetNickname() + "] Changed Name to " + nicknamePacket.Name);
-					TcpBroadcastDataToAllClients(new Packets.ChatMessagePacket("[Server] " + client.GetNickname() + " Changed Name to " + nicknamePacket.Name));
+					SendEncryptedChatPacket("[Server] " + client.GetNickname() + " Changed Name to " + nicknamePacket.Name);
 					client.SetNickname(nicknamePacket.Name);
 					break;
 
 				case Packets.Packet.PacketType.ChatMessage:
 					Packets.ChatMessagePacket messagePacket = data as Packets.ChatMessagePacket;
-					TcpBroadcastDataToAllClients(new Packets.ChatMessagePacket("[" + client.GetNickname() + "] " + messagePacket.Message));
-					PrintToConsoleAsLogMessage("[TCP] [" + messagePacket.m_PacketType + "] from [" + client.GetNickname() + " " + client.GetSocket().RemoteEndPoint + "] Message: " + messagePacket.Message);
-					break;
-
-				case Packets.Packet.PacketType.EncryptedChatMessage:
-					Packets.EncryptedChatMessagePacket encryptedMessagePacket = data as Packets.EncryptedChatMessagePacket;
-					string decryptedString = client.DecryptString(encryptedMessagePacket.Data);
-					TcpBroadcastDataToAllClients(new Packets.EncryptedChatMessagePacket(client.EncryptString("[" + client.GetNickname() + "] " + decryptedString)));
-					PrintToConsoleAsLogMessage("[TCP] [" + encryptedMessagePacket.m_PacketType + "] from [" + client.GetNickname() + " " + client.GetSocket().RemoteEndPoint + "] Message: " + decryptedString);
+					string chatMessage = client.DecryptString(messagePacket.Message);
+					SendEncryptedChatPacket("[" + client.GetNickname() + "] " + chatMessage);
+					PrintToConsoleAsLogMessage("[TCP] [" + messagePacket.m_PacketType + "] from [" + client.GetNickname() + " " + client.GetSocket().RemoteEndPoint + "] Message: " + chatMessage);
 					break;
 
 				case Packets.Packet.PacketType.PrivateMessage:
@@ -149,34 +143,42 @@ namespace Server
 							if(target == client)
 							{
 								PrintToConsoleAsLogMessage("[TCP] [Error] [" + client.GetNickname() + " " + client.GetSocket().RemoteEndPoint + "] Tried to send a Private Message to Themself");
-								TcpSendDataToSpecificClient(client, new Packets.ChatMessagePacket("[Error] You Can't Message Yourself"));
+								TcpSendDataToSpecificClient(client, new Packets.ChatMessagePacket(client.EncryptString("[Error] You Can't Message Yourself")));
 								return;
 							}
 
 							PrintToConsoleAsLogMessage("[TCP] [" + privateMessagePacket.m_PacketType + "] from [" + client.GetNickname() + " " + client.GetSocket().RemoteEndPoint + "] " +
 								"To [" + target.GetNickname() + " " + target.GetSocket().RemoteEndPoint + "] Message: " + privateMessagePacket.Message);
 
-							string message = privateMessagePacket.Message;
-							privateMessagePacket.Message = "[To " + target.GetNickname() + "] " + message;
+							string privateMessage = privateMessagePacket.Message;
+							privateMessagePacket.Message = "[To " + target.GetNickname() + "] " + privateMessage;
 							TcpSendDataToSpecificClient(client, privateMessagePacket);
-							privateMessagePacket.Message = "[From " + client.GetNickname() + "] " + message;
+							privateMessagePacket.Message = "[From " + client.GetNickname() + "] " + privateMessage;
 							TcpSendDataToSpecificClient(target, privateMessagePacket);
 							return;
 						}
 					}
 
 					PrintToConsoleAsLogMessage("[TCP] [Error] [" + client.GetNickname() + " " + client.GetSocket().RemoteEndPoint + "] Tried to send a Private Message to a client that does not exist");
-					TcpSendDataToSpecificClient(client, new Packets.ChatMessagePacket("[Error] User not Found"));
+					TcpSendDataToSpecificClient(client, new Packets.ChatMessagePacket(client.EncryptString("[Error] User not Found")));
 					break;
 				
 				case Packets.Packet.PacketType.Disconnect:
 					threads.RemoveAt(connectedClients.IndexOf(client));
 					connectedClients.Remove(client);
 					PrintToConsoleAsLogMessage("[TCP] " + client.GetNickname() + " Left The Server. [" + client.GetSocket().RemoteEndPoint + "]");
-					TcpBroadcastDataToAllClients(new Packets.ChatMessagePacket("[Server] " + client.GetNickname() + " has left the chat!"));
+					SendEncryptedChatPacket("[Server] " + client.GetNickname() + " has left the chat!");
 					client.CloseConnection();
 					//UpdateClientsOnlineBox();
 					break;
+			}
+		}
+
+		private void SendEncryptedChatPacket(string message)
+		{
+			foreach (ConnectedClient client in connectedClients)
+			{
+				client.TcpSend(new Packets.ChatMessagePacket(client.EncryptString(message)));
 			}
 		}
 

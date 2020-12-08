@@ -10,11 +10,12 @@ namespace Client
 	/// </summary>
 	public partial class ClientForm : Window
 	{
-		private string VERSION = "0.27";
+		private string VERSION = "0.28";
 
 		private ClientManager client;
 		public bool isConnected;
 		public bool menuOpened = false;
+		public bool clientsOpen = false;
 
 		private ClientConnectionForm connectionForm;
 
@@ -71,7 +72,7 @@ namespace Client
 			}
 			else
 			{
-				client.TcpSendDataToServer(new Packets.EncryptedChatMessagePacket(client.EncryptString(InputField.Text)));
+				client.TcpSendDataToServer(new Packets.ChatMessagePacket(client.EncryptString(InputField.Text)));
 				InputField.Clear();
 			}
 		}
@@ -104,28 +105,84 @@ namespace Client
 
 		private void MenuButton_Click(object sender, RoutedEventArgs e)
 		{
+			if (clientsOpen)
+			{
+				UpdateChatWindow("[Error] You need to close Clients Tab First", Colors.Red);
+				return;
+			}
+
 			menuOpened = !menuOpened;
 
 			if (menuOpened)
 			{
 				this.Width = 600;
-				ConnectButton.Margin = new Thickness(0, 0, 390, 370);
-				DisconnectButton.Margin = new Thickness(0, 0, 390, 370);
-				MenuButton.Margin = new Thickness(340, 0, 200, 370); 
-				MessageWindow.Margin = new Thickness(0, 30, 200, 30);
-				InputField.Margin = new Thickness(0, 0, 310, 0);
-				SubmitButton.Margin = new Thickness(0, 0, 200, 0); 
+				ChangeNicknameButton.Visibility = Visibility.Visible;
+				NicknameChangeBox.Visibility = Visibility.Visible;
+				NicknameHintText.Visibility = Visibility.Visible;
+				SettingsLabel.Visibility = Visibility.Visible;
+
+				OpenSidePannel();
 			}
 			else
 			{
 				this.Width = 400;
-				ConnectButton.Margin = new Thickness(0,0,190,370);
-				DisconnectButton.Margin = new Thickness(0, 0, 190, 370);
-				MenuButton.Margin = new Thickness(340, 0, 0, 370);
-				MessageWindow.Margin = new Thickness(0, 30, 0, 30);
-				InputField.Margin = new Thickness(0, 0, 110, 0);
-				SubmitButton.Margin = new Thickness(0, 0, 0, 0);
+				ChangeNicknameButton.Visibility = Visibility.Hidden;
+				NicknameChangeBox.Visibility = Visibility.Hidden;
+				NicknameHintText.Visibility = Visibility.Hidden;
+				SettingsLabel.Visibility = Visibility.Hidden;
+
+				CloseSidePannel();
 			}
+		}
+
+		private void ClientsButton_Click(object sender, RoutedEventArgs e)
+		{
+			if(menuOpened)
+			{
+				UpdateChatWindow("[Error] You need to close Settings Tab First", Colors.Red);
+				return;
+			}
+
+			clientsOpen = !clientsOpen;
+
+			if (clientsOpen)
+			{
+				ClientsConnectedBox.Visibility = Visibility.Visible;
+				ClientsLabel.Visibility = Visibility.Visible;
+
+				OpenSidePannel();
+			}
+			else
+			{
+				ClientsConnectedBox.Visibility = Visibility.Hidden;
+				ClientsLabel.Visibility = Visibility.Hidden;
+
+				CloseSidePannel();
+			}
+		}
+
+		private void OpenSidePannel()
+		{
+			this.Width = 600;
+			ConnectButton.Margin = new Thickness(0, 0, 390, 370);
+			DisconnectButton.Margin = new Thickness(0, 0, 390, 370);
+			MenuButton.Margin = new Thickness(340, 0, 200, 370);
+			ClientsButton.Margin = new Thickness(310, 0, 230, 370);
+			MessageWindow.Margin = new Thickness(0, 30, 200, 30);
+			InputField.Margin = new Thickness(0, 0, 310, 0);
+			SubmitButton.Margin = new Thickness(0, 0, 200, 0);
+		}
+
+		public void CloseSidePannel()
+		{
+			this.Width = 400;
+			ConnectButton.Margin = new Thickness(0, 0, 190, 370);
+			DisconnectButton.Margin = new Thickness(0, 0, 190, 370);
+			MenuButton.Margin = new Thickness(340, 0, 0, 370);
+			ClientsButton.Margin = new Thickness(310, 0, 30, 370);
+			MessageWindow.Margin = new Thickness(0, 30, 0, 30);
+			InputField.Margin = new Thickness(0, 0, 110, 0);
+			SubmitButton.Margin = new Thickness(0, 0, 0, 0);
 		}
 
 		private void ChangeNicknameButton_Click(object sender, RoutedEventArgs e)

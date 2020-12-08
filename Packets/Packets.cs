@@ -11,7 +11,6 @@ namespace Packets
 		public enum PacketType
 		{
 			ChatMessage,
-			EncryptedChatMessage,
 			PrivateMessage,
 			Nickname,
 			Disconnect,
@@ -31,36 +30,18 @@ namespace Packets
 	[Serializable()]
 	public class ChatMessagePacket : Packet
 	{
-		private string message;
+		private byte[] message;
 
-		public ChatMessagePacket(string message)
+		public ChatMessagePacket(byte[] message)
 		{
 			this.message = message;
 			m_PacketType = PacketType.ChatMessage;
 		}
 
-		public string Message
+		public byte[] Message
 		{
 			get { return message; }
 			protected set { message = value; }
-		}
-	}
-
-	[Serializable()]
-	public class EncryptedChatMessagePacket : Packet
-	{
-		private byte[] data;
-
-		public EncryptedChatMessagePacket(byte[] data)
-		{
-			this.data = data;
-			m_PacketType = PacketType.EncryptedChatMessage;
-		}
-
-		public byte[] Data
-		{
-			get { return data; }
-			protected set { data = value; }
 		}
 	}
 

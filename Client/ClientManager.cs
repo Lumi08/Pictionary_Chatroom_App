@@ -106,10 +106,7 @@ namespace Client
 
 					switch (recievedPacket.m_PacketType)
 					{
-						case Packets.Packet.PacketType.ChatMessage:
-							Packets.ChatMessagePacket chatPacket = recievedPacket as Packets.ChatMessagePacket;
-							clientForm.UpdateChatWindow(chatPacket.Message, Colors.Black);
-							break;
+						
 					}
 				}
 			}
@@ -128,12 +125,7 @@ namespace Client
 				{
 					case Packets.Packet.PacketType.ChatMessage:
 						Packets.ChatMessagePacket chatPacket = serverResponse as Packets.ChatMessagePacket;
-						clientForm.UpdateChatWindow(chatPacket.Message, Colors.Black);
-						break;
-
-					case Packets.Packet.PacketType.EncryptedChatMessage:
-						Packets.EncryptedChatMessagePacket encryptedChatPacket = serverResponse as Packets.EncryptedChatMessagePacket;
-						clientForm.UpdateChatWindow(DecryptString(encryptedChatPacket.Data), Colors.Black);
+						clientForm.UpdateChatWindow(DecryptString(chatPacket.Message), Colors.Black);
 						break;
 
 					case Packets.Packet.PacketType.PrivateMessage:
