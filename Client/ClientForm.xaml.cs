@@ -67,7 +67,7 @@ namespace Client
 				}
 				string targetUser = split[0].Substring(1);
 				string message = InputField.Text.Substring(2 + targetUser.Length);
-				client.TcpSendDataToServer(new Packets.PrivateMessagePacket(message, targetUser));
+				client.TcpSendDataToServer(new Packets.PrivateMessagePacket(client.EncryptString(message), targetUser));
 				InputField.Clear();
 			}
 			else
@@ -89,6 +89,8 @@ namespace Client
 				DisconnectButton.Visibility = Visibility.Visible;
 				InputField.IsReadOnly = false;
 				SubmitButton.IsEnabled = true;
+				NicknameChangeBox.IsEnabled = true;
+				ChangeNicknameButton.IsEnabled = true;
 			}
 		}
 
@@ -100,6 +102,8 @@ namespace Client
 			DisconnectButton.Visibility = Visibility.Hidden;
 			InputField.IsReadOnly = true;
 			SubmitButton.IsEnabled = false;
+			NicknameChangeBox.IsEnabled = false;
+			ChangeNicknameButton.IsEnabled = false;
 			isConnected = false;
 		}
 
@@ -107,8 +111,9 @@ namespace Client
 		{
 			if (clientsOpen)
 			{
-				UpdateChatWindow("[Error] You need to close Clients Tab First", Colors.Red);
-				return;
+				clientsOpen = false;
+				ClientsConnectedBox.Visibility = Visibility.Hidden;
+				ClientsLabel.Visibility = Visibility.Hidden;
 			}
 
 			menuOpened = !menuOpened;
@@ -118,7 +123,6 @@ namespace Client
 				this.Width = 600;
 				ChangeNicknameButton.Visibility = Visibility.Visible;
 				NicknameChangeBox.Visibility = Visibility.Visible;
-				NicknameHintText.Visibility = Visibility.Visible;
 				SettingsLabel.Visibility = Visibility.Visible;
 
 				OpenSidePannel();
@@ -128,7 +132,6 @@ namespace Client
 				this.Width = 400;
 				ChangeNicknameButton.Visibility = Visibility.Hidden;
 				NicknameChangeBox.Visibility = Visibility.Hidden;
-				NicknameHintText.Visibility = Visibility.Hidden;
 				SettingsLabel.Visibility = Visibility.Hidden;
 
 				CloseSidePannel();
@@ -139,8 +142,10 @@ namespace Client
 		{
 			if(menuOpened)
 			{
-				UpdateChatWindow("[Error] You need to close Settings Tab First", Colors.Red);
-				return;
+				menuOpened = false;
+				ChangeNicknameButton.Visibility = Visibility.Hidden;
+				NicknameChangeBox.Visibility = Visibility.Hidden;
+				SettingsLabel.Visibility = Visibility.Hidden;
 			}
 
 			clientsOpen = !clientsOpen;

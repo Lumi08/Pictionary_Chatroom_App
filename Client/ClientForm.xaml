@@ -36,21 +36,9 @@
         <Button x:Name="DisconnectButton" Content="Disconnect" Margin="0,0,190,370" 
                 Click="DisconnectButton_Click" Visibility="Hidden" Background="#FFAA5B5B"/>
 
-        <Button x:Name="ChangeNicknameButton" Content="Change Nickname" Margin="384,58,10,0" VerticalAlignment="Top" Height="23" Click="ChangeNicknameButton_Click" Visibility="Hidden"/>
-        <TextBox x:Name="NicknameChangeBox" Height="23" Margin="384,30,10,0" TextWrapping="Wrap" VerticalAlignment="Top" FontSize="14" Visibility="Hidden"/>
+        <Button x:Name="ChangeNicknameButton" Content="Change Nickname" Margin="384,58,10,0" VerticalAlignment="Top" Height="23" Click="ChangeNicknameButton_Click" Visibility="Hidden" IsEnabled="False"/>
         <TextBox x:Name="ClientsConnectedBox" Margin="384,30,10,0" TextWrapping="Wrap" VerticalAlignment="Stretch" FontSize="14" Visibility="Hidden" IsReadOnly="True"/>
-        <TextBlock x:Name="NicknameHintText" IsHitTestVisible="False" Text="Enter New Nickname" Margin="384,34,10,0" Foreground="DarkGray" VerticalAlignment="Top" TextAlignment="Center" Visibility="Hidden">
-            <TextBlock.Style>
-                <Style TargetType="{x:Type TextBlock}">
-                    <Setter Property="Visibility" Value="Collapsed"/>
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding Text, ElementName=NicknameChangeBox}" Value="">
-                            <Setter Property="Visibility" Value="Visible"/>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </TextBlock.Style>
-        </TextBlock>
+        <TextBox x:Name="NicknameChangeBox" Height="23" Margin="384,30,10,0" TextWrapping="Wrap" VerticalAlignment="Top" FontSize="14" Visibility="Hidden" IsEnabled="False"/>
         <Label x:Name="SettingsLabel" Content="Settings" Margin="440,-1,40,0" VerticalAlignment="Top" FontSize="14" Visibility="Hidden"/>
         <Label x:Name="ClientsLabel" Content="Clients" Margin="440,-1,40,0" VerticalAlignment="Top" FontSize="14" Visibility="Hidden"/>
 

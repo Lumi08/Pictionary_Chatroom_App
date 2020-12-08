@@ -130,7 +130,7 @@ namespace Client
 
 					case Packets.Packet.PacketType.PrivateMessage:
 						Packets.PrivateMessagePacket privateMessagePacket = serverResponse as Packets.PrivateMessagePacket;
-						clientForm.UpdateChatWindow(privateMessagePacket.Message, Colors.DeepPink);
+						clientForm.UpdateChatWindow(DecryptString(privateMessagePacket.Message), Colors.DeepPink);
 						break;
 
 					case Packets.Packet.PacketType.Disconnect:

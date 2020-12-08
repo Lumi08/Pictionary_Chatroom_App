@@ -48,17 +48,17 @@ namespace Packets
 	[Serializable()]
 	public class PrivateMessagePacket : Packet
 	{
-		private string message;
+		private byte[] message;
 		private string targetUser;
 
-		public PrivateMessagePacket(string message, string targetUser)
+		public PrivateMessagePacket(byte[] message, string targetUser)
 		{
 			this.message = message;
 			this.targetUser = targetUser;
 			m_PacketType = PacketType.PrivateMessage;
 		}
 
-		public string Message
+		public byte[] Message
 		{
 			get { return message; }
 			set { message = value; }

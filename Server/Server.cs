@@ -150,10 +150,10 @@ namespace Server
 							PrintToConsoleAsLogMessage("[TCP] [" + privateMessagePacket.m_PacketType + "] from [" + client.GetNickname() + " " + client.GetSocket().RemoteEndPoint + "] " +
 								"To [" + target.GetNickname() + " " + target.GetSocket().RemoteEndPoint + "] Message: " + privateMessagePacket.Message);
 
-							string privateMessage = privateMessagePacket.Message;
-							privateMessagePacket.Message = "[To " + target.GetNickname() + "] " + privateMessage;
+							string privateMessage = client.DecryptString(privateMessagePacket.Message);
+							privateMessagePacket.Message = client.EncryptString("[To " + target.GetNickname() + "] " + privateMessage);
 							TcpSendDataToSpecificClient(client, privateMessagePacket);
-							privateMessagePacket.Message = "[From " + client.GetNickname() + "] " + privateMessage;
+							privateMessagePacket.Message = target.EncryptString("[From " + client.GetNickname() + "] " + privateMessage);
 							TcpSendDataToSpecificClient(target, privateMessagePacket);
 							return;
 						}
