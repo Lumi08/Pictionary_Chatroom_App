@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Documents;
+using System.Windows.Input;
 using System.Windows.Media;
 
 namespace Client
@@ -10,7 +11,7 @@ namespace Client
 	/// </summary>
 	public partial class ClientForm : Window
 	{
-		private string VERSION = "0.28";
+		private string VERSION = "0.31";
 
 		private ClientManager client;
 		public bool isConnected;
@@ -22,6 +23,7 @@ namespace Client
 		public ClientForm(ClientManager client)
 		{
 			InitializeComponent();
+			ClientsComboBox.SelectedIndex = 0;
 			this.client = client;
 			MessageWindow.Foreground = new SolidColorBrush(Colors.Gray);
 			MessageWindow.AppendText("Welcome to Chat Facility v" + VERSION); 
@@ -46,10 +48,26 @@ namespace Client
 			ClientsConnectedTextbox.Dispatcher.Invoke(() =>
 			{
 				ClientsConnectedTextbox.Text = "";
-				foreach(string client in clients)
+				object temp = ClientsComboBox.SelectedItem;
+				ClientsComboBox.Items.Clear();
+				ClientsComboBox.Items.Add("[All]");
+				foreach(string singleClient in clients)
 				{
-					ClientsConnectedTextbox.Text += (client + Environment.NewLine);
+					if(singleClient != null)
+					{
+						if(singleClient != client.clientNickname)
+						{
+							ClientsConnectedTextbox.Text += (singleClient + Environment.NewLine);
+							ClientsComboBox.Items.Add(singleClient);
+						}
+					}
 				}
+
+				if((ClientsComboBox.SelectedItem = temp) == null)
+				{
+					ClientsComboBox.SelectedItem = "[All]";
+				}
+
 			});
 		}
 
@@ -61,7 +79,6 @@ namespace Client
 				ConnectButton.Visibility = Visibility.Visible;
 				DisconnectButton.Visibility = Visibility.Hidden;
 				InputField.IsReadOnly = true;
-				SubmitButton.IsEnabled = false;
 				isConnected = false;
 			});
 		}
@@ -99,7 +116,6 @@ namespace Client
 				ConnectButton.Visibility = Visibility.Hidden;
 				DisconnectButton.Visibility = Visibility.Visible;
 				InputField.IsReadOnly = false;
-				SubmitButton.IsEnabled = true;
 				NicknameChangeBox.IsEnabled = true;
 				ChangeNicknameButton.IsEnabled = true;
 			}
@@ -112,11 +128,35 @@ namespace Client
 			ConnectButton.Visibility = Visibility.Visible;
 			DisconnectButton.Visibility = Visibility.Hidden;
 			InputField.IsReadOnly = true;
-			SubmitButton.IsEnabled = false;
 			NicknameChangeBox.IsEnabled = false;
 			ChangeNicknameButton.IsEnabled = false;
 			ClientsConnectedTextbox.Clear();
 			isConnected = false;
+		}
+
+		private void InputField_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+		{
+			if (e.Key == Key.Enter &&
+				!(Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)) &&
+				!(Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.LeftShift)))
+			{
+				if(ClientsComboBox.SelectedIndex == -1)
+				{
+					UpdateChatWindow("[Error] Message has no location, Auto set to [All]", Colors.Red);
+					ClientsComboBox.SelectedIndex = 0;
+					return;
+				}
+
+				if(ClientsComboBox.SelectedIndex != 0)
+				{
+					client.TcpSendDataToServer(new Packets.PrivateMessagePacket(client.EncryptString(InputField.Text), ClientsComboBox.SelectedItem.ToString()));
+				}
+				else
+				{
+					client.TcpSendDataToServer(new Packets.ChatMessagePacket(client.EncryptString(InputField.Text)));
+				}
+				InputField.Text = "";
+			}
 		}
 
 		private void MenuButton_Click(object sender, RoutedEventArgs e)
@@ -186,8 +226,8 @@ namespace Client
 			MenuButton.Margin = new Thickness(340, 0, 200, 370);
 			ClientsButton.Margin = new Thickness(310, 0, 230, 370);
 			MessageWindow.Margin = new Thickness(0, 30, 200, 30);
-			InputField.Margin = new Thickness(0, 0, 310, 0);
-			SubmitButton.Margin = new Thickness(0, 0, 200, 0);
+			InputField.Margin = new Thickness(100, 0, 200, 0);
+			ClientsComboBox.Margin = new Thickness(0, 0, 470, 0);
 		}
 
 		public void CloseSidePannel()
@@ -198,8 +238,8 @@ namespace Client
 			MenuButton.Margin = new Thickness(340, 0, 0, 370);
 			ClientsButton.Margin = new Thickness(310, 0, 30, 370);
 			MessageWindow.Margin = new Thickness(0, 30, 0, 30);
-			InputField.Margin = new Thickness(0, 0, 110, 0);
-			SubmitButton.Margin = new Thickness(0, 0, 0, 0);
+			InputField.Margin = new Thickness(100, 0, 0, 0);
+			ClientsComboBox.Margin = new Thickness(0, 0, 270, 0);
 		}
 
 		private void ChangeNicknameButton_Click(object sender, RoutedEventArgs e)

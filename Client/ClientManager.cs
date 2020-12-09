@@ -33,6 +33,7 @@ namespace Client
 		private Thread udpNetworkProcessingThread;
 		//private Thread formThread;
 		public bool inApp;
+		public string clientNickname;
 
 		public ClientManager()
 		{
@@ -47,6 +48,7 @@ namespace Client
 		//Connections
 		public void Login(string nickname)
 		{
+			clientNickname = nickname;
 			TcpSendDataToServer(new Packets.LoginPacket(nickname, (IPEndPoint)udpClient.Client.LocalEndPoint, publicKey));
 		}
 

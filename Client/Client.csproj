@@ -97,8 +97,5 @@
       <Name>Packets</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Content Include="SettingsCog.png" />
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

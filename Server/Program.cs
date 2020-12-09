@@ -17,7 +17,7 @@ namespace Server
 			int maxClients;
 
 			Console.WriteLine("Please enter the max number of players to connect to the server");
-			Console.WriteLine("(Keep in mind each client connected is a extra server thread)");
+			Console.WriteLine("(Keep in mind each client connected is an extra server thread)");
 			Console.Write("Max Amount of Clients: ");
 			while(!int.TryParse(Console.ReadLine(), out maxClients))
 			{

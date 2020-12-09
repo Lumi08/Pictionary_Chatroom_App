@@ -110,7 +110,7 @@ namespace Server
 				case Packets.Packet.PacketType.Login:
 					Packets.LoginPacket loginPacket = data as Packets.LoginPacket;
 					client.Login(loginPacket.Nickname, loginPacket.Endpoint, loginPacket.PublicKey);
-					PrintToConsoleAsLogMessage("[TCP] New Login from " + loginPacket.Endpoint);
+					PrintToConsoleAsLogMessage("[TCP] " + loginPacket.Nickname + " Joined the Server [" + loginPacket.Endpoint + "]");
 					UpdateClientsOnlineBox();
 					SendEncryptedChatPacket("[Server] " + connectedClients.Last().GetNickname() + " has joined the chat!");
 					break;
@@ -151,10 +151,10 @@ namespace Server
 								return;
 							}
 
-							PrintToConsoleAsLogMessage("[TCP] [" + privateMessagePacket.m_PacketType + "] from [" + client.GetNickname() + " " + client.GetSocket().RemoteEndPoint + "] " +
-								"To [" + target.GetNickname() + " " + target.GetSocket().RemoteEndPoint + "] Message: " + privateMessagePacket.Message);
-
 							string privateMessage = client.DecryptString(privateMessagePacket.Message);
+							PrintToConsoleAsLogMessage("[TCP] [" + privateMessagePacket.m_PacketType + "] from [" + client.GetNickname() + " " + client.GetSocket().RemoteEndPoint + "] " +
+								"To [" + target.GetNickname() + " " + target.GetSocket().RemoteEndPoint + "] Message: " + privateMessage);
+
 							privateMessagePacket.Message = client.EncryptString("[To " + target.GetNickname() + "] " + privateMessage);
 							TcpSendDataToSpecificClient(client, privateMessagePacket);
 							privateMessagePacket.Message = target.EncryptString("[From " + client.GetNickname() + "] " + privateMessage);
