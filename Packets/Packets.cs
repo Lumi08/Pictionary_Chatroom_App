@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Security.Cryptography;
 
@@ -225,18 +226,34 @@ namespace Packets
 	[Serializable()]
 	public class PictionaryPaintPacket : Packet
 	{
-		private byte[] data;
+		private double[] xPositions;
+		private double[] yPositions;
 
-		public PictionaryPaintPacket(byte[] data)
+		public PictionaryPaintPacket(List<double> xPos, List<double> yPos)
 		{
+			xPositions = new double[xPos.Count];
+			yPositions = new double[yPos.Count];
 			m_PacketType = PacketType.PictionaryPaint;
-			this.data = data;
+			for(int i = 0; i < xPos.Count; i++)
+			{
+				xPositions[i] = xPos[i];
+			}
+			for (int i = 0; i < yPos.Count; i++)
+			{
+				yPositions[i] = yPos[i];
+			}
 		}
 
-		public byte[] Data
+		public double[] XPositions
 		{
-			get { return data; }
-			protected set {}
+			get { return xPositions; }
+			set { }
+		}
+
+		public double[] YPositions
+		{
+			get { return yPositions; }
+			set { }
 		}
 	}
 }

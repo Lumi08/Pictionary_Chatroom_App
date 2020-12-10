@@ -16,6 +16,7 @@ using System.IO;
 using System.Windows.Ink;
 using System.Threading;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Reflection;
 
 namespace Client
 {
@@ -24,18 +25,48 @@ namespace Client
 	/// </summary>
 	public partial class PictionaryForm : Window
 	{
-        ClientManager clientManager;
-		List<Point> linePoints;
+		ClientManager clientManager;
+		List<double> linePointsX;
+		List<double> linePointsY;
 
 		public PictionaryForm(ClientManager client)
 		{
 			InitializeComponent();
-			PaintCanvas.Strokes.StrokesChanged += Strokes_StrokesChanged;
-			linePoints = new List<Point>();
+
+			createGridOfColor();
+
+			linePointsX = new List<double>();
+			linePointsY = new List<double>();
 			clientManager = client;
 		}
 
-		private void Strokes_StrokesChanged(object sender, StrokeCollectionChangedEventArgs e)
+		private void createGridOfColor()
+		{
+			PropertyInfo[] props = typeof(Brushes).GetProperties(BindingFlags.Public |
+												  BindingFlags.Static);
+			// Create individual items
+			foreach (PropertyInfo p in props)
+			{
+				Button b = new Button();
+				b.Background = (SolidColorBrush)p.GetValue(null, null);
+				b.Foreground = Brushes.Transparent;
+				b.BorderBrush = Brushes.Transparent;
+				b.Click += new RoutedEventHandler(b_Click);
+				this.colorGrid.Children.Add(b);
+			}
+		}
+		private void b_Click(object sender, RoutedEventArgs e)
+		{
+			SolidColorBrush sb = (SolidColorBrush)(sender as Button).Background;
+			//currColor = sb.Color;
+		}
+
+		private void ClearButton_Click(object sender, RoutedEventArgs e)
+		{
+			this.PaintCanvas.Strokes.Clear();
+		}
+
+		private void button2_Click(object sender, RoutedEventArgs e)
 		{
 			byte[] data;
 			using (MemoryStream ms = new MemoryStream())
@@ -45,28 +76,10 @@ namespace Client
 				data = ms.ToArray();
 			}
 
-			clientManager.UdpSendDataToServer(new Packets.PictionaryPaintPacket(data));
-		}
-
-        private void ClearButton_Click(object sender, RoutedEventArgs e)
-        {
-            this.PaintCanvas.Strokes.Clear();
-        }
-
-		private void button2_Click(object sender, RoutedEventArgs e)
-        {
-			byte[] data;
-			using (MemoryStream ms = new MemoryStream())
-			{
-				ms.Position = 0;
-				PaintCanvas.Strokes.Save(ms);
-				data = ms.ToArray();
-			}
-		
 			//clientManager.UdpSendDataToServer(new Packets.PictionaryPaintPacket(data));
 		}
 
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+		private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
 		{
 
 		}
@@ -85,37 +98,23 @@ namespace Client
 			});
 		}
 
-		public void UpdatePaintCanvas(byte[] data)
+		public void UpdatePaintCanvas(double[] xPositions, double[] yPositions)
 		{
 			PaintCanvas.Dispatcher.Invoke(() =>
 			{
-				using (MemoryStream ms = new MemoryStream(data))
+
+				for (int i = 0; i < xPositions.Length - 1; i++)
 				{
-					ms.Position = 0;
-					var mStream = new MemoryStream();
-					var binFormatter = new BinaryFormatter();
+					Line l = new Line();
+					l.X1 = xPositions[i];
+					l.Y1 = yPositions[i];
+					l.X2 = xPositions[i + 1];
+					l.Y2 = yPositions[i + 1];
 
-					// Where 'objectBytes' is your byte array.
-					mStream.Write(data, 0, data.Length);
-					mStream.Position = 0;
-
-					var myObject = binFormatter.Deserialize(mStream) as List<Point>;
-
-					for(int i = 0; i < myObject.Count-1; i++)
-					{
-						Line l = new Line();
-						l.X1 = myObject[i].X;
-						l.Y1 = myObject[i].Y;
-						l.X2 = myObject[i+1].X;
-						l.Y2 = myObject[i+1].Y;
-
-						l.Stroke = new SolidColorBrush(Colors.Black);
-						l.StrokeThickness = 2;
-						PaintCanvas.Children.Add(l);
-					}
-					ms.Close();
+					l.Stroke = new SolidColorBrush(Colors.Black);
+					l.StrokeThickness = 2;
+					PaintCanvas.Children.Add(l);
 				}
-
 			});
 		}
 
@@ -130,26 +129,38 @@ namespace Client
 					return;
 				}
 				clientManager.TcpSendDataToServer(new Packets.PictionaryChatMessagePacket(clientManager.EncryptString(InputField.Text)));
-				
+
 				InputField.Text = "";
 			}
 		}
 
 		private void PaintCanvas_MouseMove(object sender, MouseEventArgs e)
 		{
+			//Thread sendDataThread = new Thread(() => { clientManager.UdpSendDataToServer(new Packets.PictionaryPaintPacket(linePointsX, linePointsY); });
+
 			if (e.LeftButton == MouseButtonState.Pressed)
 			{
-				linePoints.Add(e.GetPosition(PaintCanvas));
+				linePointsX.Add(e.GetPosition(PaintCanvas).X);
+				linePointsY.Add(e.GetPosition(PaintCanvas).Y);
 
-				if(linePoints.Count >= 40)
+				if (linePointsX.Count >= 40)
 				{
-					var binFormatter = new BinaryFormatter();
-					var mStream = new MemoryStream();
-					binFormatter.Serialize(mStream, linePoints);
-					clientManager.UdpSendDataToServer(new Packets.PictionaryPaintPacket(mStream.ToArray()));
-					linePoints.Clear();
+					clientManager.UdpSendDataToServer(new Packets.PictionaryPaintPacket(linePointsX, linePointsY));
+					linePointsX.Clear();
+					linePointsY.Clear();
+				}
+			}
+
+			if (e.LeftButton == MouseButtonState.Released)
+			{
+				if (linePointsX.Count != 0)
+				{
+					clientManager.UdpSendDataToServer(new Packets.PictionaryPaintPacket(linePointsX, linePointsY));
+					linePointsX.Clear();
+					linePointsY.Clear();
 				}
 			}
 		}
 	}
 }
+
