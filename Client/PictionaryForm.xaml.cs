@@ -15,6 +15,7 @@ using System.Windows.Shapes;
 using System.IO;
 using System.Windows.Ink;
 using System.Threading;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Client
 {
@@ -24,38 +25,27 @@ namespace Client
 	public partial class PictionaryForm : Window
 	{
         ClientManager clientManager;
+		List<Point> linePoints;
 
 		public PictionaryForm(ClientManager client)
 		{
 			InitializeComponent();
-
-            clientManager = client;
-			Thread thread = new Thread(() => { Run(); });
-			thread.Start();
+			PaintCanvas.Strokes.StrokesChanged += Strokes_StrokesChanged;
+			linePoints = new List<Point>();
+			clientManager = client;
 		}
 
-		public void Run()
+		private void Strokes_StrokesChanged(object sender, StrokeCollectionChangedEventArgs e)
 		{
-			while(true)
+			byte[] data;
+			using (MemoryStream ms = new MemoryStream())
 			{
-				if(clientManager.playingPictionary)
-				{
-					Thread.Sleep(1000);
-					PaintCanvas.Dispatcher.Invoke(() =>
-					{
-						
-						byte[] data;
-						using (MemoryStream ms = new MemoryStream())
-						{
-							ms.Position = 0;
-							PaintCanvas.Strokes.Save(ms);
-							data = ms.ToArray();
-						}
-
-						clientManager.UdpSendDataToServer(new Packets.PictionaryPaintPacket(data));
-					});
-				}
+				ms.Position = 0;
+				PaintCanvas.Strokes.Save(ms);
+				data = ms.ToArray();
 			}
+
+			clientManager.UdpSendDataToServer(new Packets.PictionaryPaintPacket(data));
 		}
 
         private void ClearButton_Click(object sender, RoutedEventArgs e)
@@ -63,7 +53,7 @@ namespace Client
             this.PaintCanvas.Strokes.Clear();
         }
 
-        private void button2_Click(object sender, RoutedEventArgs e)
+		private void button2_Click(object sender, RoutedEventArgs e)
         {
 			byte[] data;
 			using (MemoryStream ms = new MemoryStream())
@@ -73,7 +63,7 @@ namespace Client
 				data = ms.ToArray();
 			}
 		
-			clientManager.UdpSendDataToServer(new Packets.PictionaryPaintPacket(data));
+			//clientManager.UdpSendDataToServer(new Packets.PictionaryPaintPacket(data));
 		}
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -102,8 +92,27 @@ namespace Client
 				using (MemoryStream ms = new MemoryStream(data))
 				{
 					ms.Position = 0;
-					StrokeCollection Strokes = new StrokeCollection(ms);
-					PaintCanvas.Strokes = Strokes;
+					var mStream = new MemoryStream();
+					var binFormatter = new BinaryFormatter();
+
+					// Where 'objectBytes' is your byte array.
+					mStream.Write(data, 0, data.Length);
+					mStream.Position = 0;
+
+					var myObject = binFormatter.Deserialize(mStream) as List<Point>;
+
+					for(int i = 0; i < myObject.Count-1; i++)
+					{
+						Line l = new Line();
+						l.X1 = myObject[i].X;
+						l.Y1 = myObject[i].Y;
+						l.X2 = myObject[i+1].X;
+						l.Y2 = myObject[i+1].Y;
+
+						l.Stroke = new SolidColorBrush(Colors.Black);
+						l.StrokeThickness = 2;
+						PaintCanvas.Children.Add(l);
+					}
 					ms.Close();
 				}
 
@@ -123,6 +132,23 @@ namespace Client
 				clientManager.TcpSendDataToServer(new Packets.PictionaryChatMessagePacket(clientManager.EncryptString(InputField.Text)));
 				
 				InputField.Text = "";
+			}
+		}
+
+		private void PaintCanvas_MouseMove(object sender, MouseEventArgs e)
+		{
+			if (e.LeftButton == MouseButtonState.Pressed)
+			{
+				linePoints.Add(e.GetPosition(PaintCanvas));
+
+				if(linePoints.Count >= 40)
+				{
+					var binFormatter = new BinaryFormatter();
+					var mStream = new MemoryStream();
+					binFormatter.Serialize(mStream, linePoints);
+					clientManager.UdpSendDataToServer(new Packets.PictionaryPaintPacket(mStream.ToArray()));
+					linePoints.Clear();
+				}
 			}
 		}
 	}

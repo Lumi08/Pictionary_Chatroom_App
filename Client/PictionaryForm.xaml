@@ -9,7 +9,7 @@
         ResizeMode="NoResize"
         Closing="Window_Closing">
     <Grid>
-        <InkCanvas x:FieldModifier="public" x:Name="PaintCanvas" HorizontalAlignment="Stretch" Margin="150,10,295,100" VerticalAlignment="Stretch"/>
+        <InkCanvas x:FieldModifier="public" x:Name="PaintCanvas" HorizontalAlignment="Stretch" Margin="150,10,295,100" VerticalAlignment="Stretch" MouseMove="PaintCanvas_MouseMove" />
         <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="150,10,290,100"/>
         <RichTextBox x:Name="ChatBox" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="710,10,10,130"/>
         <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="710,10,10,130"/>
