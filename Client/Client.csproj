@@ -57,6 +57,9 @@
     <Compile Include="ClientForm.xaml.cs">
       <DependentUpon>ClientForm.xaml</DependentUpon>
     </Compile>
+    <Compile Include="PictionaryForm.xaml.cs">
+      <DependentUpon>PictionaryForm.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -87,6 +90,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="ClientForm.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="PictionaryForm.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -14,6 +14,7 @@ namespace Client
 	{
 		//Forms
 		private ClientForm clientForm;
+		private PictionaryForm pictionaryForm;
 
 		//Network
 		private TcpClient tcpClient;
@@ -31,13 +32,15 @@ namespace Client
 
 		private Thread tcpNetworkProcessingThread;
 		private Thread udpNetworkProcessingThread;
+
 		//private Thread formThread;
-		public bool inApp;
+		public bool playingPictionary;
 		public string clientNickname;
 
 		public ClientManager()
 		{
 			clientForm = new ClientForm(this);
+			pictionaryForm = new PictionaryForm(this);
 			rsaProvider = new RSACryptoServiceProvider(1024);
 			publicKey = rsaProvider.ExportParameters(false);
 			privateKey = rsaProvider.ExportParameters(true);
@@ -94,6 +97,21 @@ namespace Client
 			return false;
 		}
 
+		public void PlayPictionary()
+		{
+			playingPictionary = !playingPictionary;
+			if(playingPictionary)
+			{
+				TcpSendDataToServer(new Packets.GameConnectionPacket(Packets.Packet.GameType.Pictionary, true));
+			}
+			else
+			{
+				TcpSendDataToServer(new Packets.GameConnectionPacket(Packets.Packet.GameType.Pictionary, false));
+			}
+
+			pictionaryForm.Show();
+		}
+
 		//Processing server response
 		private void UdpProccessServerResponse()
 		{
@@ -108,7 +126,10 @@ namespace Client
 
 					switch (recievedPacket.m_PacketType)
 					{
-						
+						case Packets.Packet.PacketType.PictionaryPaint:
+							Packets.PictionaryPaintPacket paintPacket = recievedPacket as Packets.PictionaryPaintPacket;
+							pictionaryForm.UpdatePaintCanvas(paintPacket.Data);
+							break;
 					}
 				}
 			}
@@ -148,6 +169,11 @@ namespace Client
 					case Packets.Packet.PacketType.ClientList:
 						Packets.ClientsPacket clientsPacket = serverResponse as Packets.ClientsPacket;
 						clientForm.UpdateClientWindow(clientsPacket.Clients);
+						break;
+
+					case Packets.Packet.PacketType.PictionaryChatMessage:
+						Packets.PictionaryChatMessagePacket pictionaryChatMessage = serverResponse as Packets.PictionaryChatMessagePacket;
+						pictionaryForm.UpdateChatWindow(DecryptString(pictionaryChatMessage.message), Colors.Black);
 						break;
 				}
 			}
@@ -229,6 +255,7 @@ namespace Client
 
 		public void Close()
 		{
+			pictionaryForm.Close();
 			if(clientForm.isConnected)
 			{
 				tcpNetworkProcessingThread.Abort();

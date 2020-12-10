@@ -16,7 +16,15 @@ namespace Packets
 			Disconnect,
 			Login,
 			KeyPacket,
-			ClientList
+			ClientList,
+			GameConnectionPacket,
+			PictionaryChatMessage,
+			PictionaryPaint
+		}
+
+		public enum GameType
+		{
+			Pictionary
 		}
 
 		private PacketType _packetType;
@@ -166,6 +174,69 @@ namespace Packets
 		{
 			get { return key; }
 			set { }
+		}
+	}
+
+	[Serializable()]
+	public class GameConnectionPacket : Packet
+	{
+		GameType gameToPlay;
+		bool connection;
+
+		public GameConnectionPacket(GameType game, bool connected)
+		{
+			m_PacketType = PacketType.GameConnectionPacket;
+			gameToPlay = game;
+			this.connection = connected;
+		}
+
+		public GameType GameToPlay
+		{
+			get { return gameToPlay; }
+			set { }
+		}
+
+		public bool Connected
+		{
+			get { return connection; }
+			set { }
+		}
+	}
+
+	//Pictionary Packets
+	[Serializable()]
+	public class PictionaryChatMessagePacket : Packet
+	{
+		public byte[] message;
+
+		public PictionaryChatMessagePacket(byte[] message)
+		{
+			this.message = message;
+			m_PacketType = PacketType.PictionaryChatMessage;
+		}
+
+		public byte[] Message
+		{
+			get { return message; }
+			protected set { message = value; }
+		}
+	}
+
+	[Serializable()]
+	public class PictionaryPaintPacket : Packet
+	{
+		private byte[] data;
+
+		public PictionaryPaintPacket(byte[] data)
+		{
+			m_PacketType = PacketType.PictionaryPaint;
+			this.data = data;
+		}
+
+		public byte[] Data
+		{
+			get { return data; }
+			protected set {}
 		}
 	}
 }

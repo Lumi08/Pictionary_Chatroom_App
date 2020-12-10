@@ -83,28 +83,6 @@ namespace Client
 			});
 		}
 
-		private void SubmitButton_Click(object sender, EventArgs e)
-		{
-			if(InputField.Text.StartsWith("/"))
-			{
-				string[] split = InputField.Text.Split(' ');
-				if (split.Length < 2)
-				{
-					UpdateChatWindow("[Error] Missing Message Args", Colors.Red);
-					return;
-				}
-				string targetUser = split[0].Substring(1);
-				string message = InputField.Text.Substring(2 + targetUser.Length);
-				client.TcpSendDataToServer(new Packets.PrivateMessagePacket(client.EncryptString(message), targetUser));
-				InputField.Clear();
-			}
-			else
-			{
-				client.TcpSendDataToServer(new Packets.ChatMessagePacket(client.EncryptString(InputField.Text)));
-				InputField.Clear();
-			}
-		}
-
 		private void ConnectButton_Click(object sender, EventArgs e)
 		{
 			connectionForm = new ClientConnectionForm();
@@ -117,6 +95,7 @@ namespace Client
 				DisconnectButton.Visibility = Visibility.Visible;
 				InputField.IsReadOnly = false;
 				NicknameChangeBox.IsEnabled = true;
+				PictionaryButton.IsEnabled = true;
 				ChangeNicknameButton.IsEnabled = true;
 			}
 		}
@@ -129,9 +108,15 @@ namespace Client
 			DisconnectButton.Visibility = Visibility.Hidden;
 			InputField.IsReadOnly = true;
 			NicknameChangeBox.IsEnabled = false;
+			PictionaryButton.IsEnabled = false;
 			ChangeNicknameButton.IsEnabled = false;
 			ClientsConnectedTextbox.Clear();
 			isConnected = false;
+		}
+
+		private void PictionaryButton_Click(object sender, RoutedEventArgs e)
+		{
+			client.PlayPictionary();
 		}
 
 		private void InputField_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
@@ -140,6 +125,11 @@ namespace Client
 				!(Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)) &&
 				!(Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.LeftShift)))
 			{
+				if(InputField.Text == "")
+				{
+					return;
+				}
+
 				if(ClientsComboBox.SelectedIndex == -1)
 				{
 					UpdateChatWindow("[Error] Message has no location, Auto set to [All]", Colors.Red);
@@ -176,6 +166,8 @@ namespace Client
 				ChangeNicknameButton.Visibility = Visibility.Visible;
 				NicknameChangeBox.Visibility = Visibility.Visible;
 				SettingsLabel.Visibility = Visibility.Visible;
+				GamesLabel.Visibility = Visibility.Visible;
+				PictionaryButton.Visibility = Visibility.Visible;
 
 				OpenSidePannel();
 			}
@@ -185,6 +177,8 @@ namespace Client
 				ChangeNicknameButton.Visibility = Visibility.Hidden;
 				NicknameChangeBox.Visibility = Visibility.Hidden;
 				SettingsLabel.Visibility = Visibility.Hidden;
+				GamesLabel.Visibility = Visibility.Hidden;
+				PictionaryButton.Visibility = Visibility.Hidden;
 
 				CloseSidePannel();
 			}
@@ -198,6 +192,8 @@ namespace Client
 				ChangeNicknameButton.Visibility = Visibility.Hidden;
 				NicknameChangeBox.Visibility = Visibility.Hidden;
 				SettingsLabel.Visibility = Visibility.Hidden;
+				GamesLabel.Visibility = Visibility.Hidden;
+				PictionaryButton.Visibility = Visibility.Hidden;
 			}
 
 			clientsOpen = !clientsOpen;

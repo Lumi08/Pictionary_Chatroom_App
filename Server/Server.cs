@@ -16,14 +16,17 @@ namespace Server
 		private UdpClient udpListener;
 		private List<Thread> threads = new List<Thread>();
 		private List<ConnectedClient> connectedClients = new List<ConnectedClient>();
+		private List<ConnectedClient> pictionaryLobby = new List<ConnectedClient>();
 
 		private int maxClients;
+		private bool playingPictionary;
 
 		public Server(string ipAddress, int port, int maxClients)
 		{
 			tcpListener = new TcpListener(IPAddress.Parse(ipAddress), port);
 			udpListener = new UdpClient(port);
 			this.maxClients = maxClients;
+			playingPictionary = false;
 		}
 
 		public void Start()
@@ -33,6 +36,9 @@ namespace Server
 				tcpListener.Start();
 				Thread udpListenThread = new Thread(() => { UdpListen(); });
 				udpListenThread.Start();
+
+				Thread serverRunningThread = new Thread(() => { Run(); });
+				serverRunningThread.Start();
 			}
 			catch(Exception e)
 			{
@@ -61,7 +67,17 @@ namespace Server
 					Thread test = new Thread(() => { ClientMethod(newClient); });
 				}
 			}
+		}
 
+		public void Run()
+		{
+			while(true)
+			{
+				if(playingPictionary)
+				{
+					//SendEncryptedChatPacket("Playing Pictionary!");
+				}
+			}
 		}
 
 		private void UdpListen()
@@ -78,10 +94,7 @@ namespace Server
 
 					foreach (ConnectedClient client in connectedClients)
 					{
-						if (endPoint.ToString() == client.endPoint.ToString())
-						{
-							udpListener.Send(bytes, bytes.Length, client.endPoint);
-						}
+						udpListener.Send(bytes, bytes.Length, client.endPoint);	
 					}
 				}
 			}
@@ -166,6 +179,35 @@ namespace Server
 					PrintToConsoleAsLogMessage("[TCP] [Error] [" + client.GetNickname() + " " + client.GetSocket().RemoteEndPoint + "] Tried to send a Private Message to a client that does not exist");
 					TcpSendDataToSpecificClient(client, new Packets.ChatMessagePacket(client.EncryptString("[Error] User not Found")));
 					break;
+
+				case Packets.Packet.PacketType.GameConnectionPacket:
+					Packets.GameConnectionPacket gameConnectionPacket = data as Packets.GameConnectionPacket;
+
+					if(gameConnectionPacket.GameToPlay == Packets.Packet.GameType.Pictionary)
+					{
+						if(gameConnectionPacket.Connected)
+						{
+							TcpSendDataToSpecificClient(client, new Packets.ChatMessagePacket(client.EncryptString("[Server] You have joined the Pictionary Lobby")));
+							pictionaryLobby.Add(client);
+						}
+						if (!gameConnectionPacket.Connected)
+						{
+							TcpSendDataToSpecificClient(client, new Packets.ChatMessagePacket(client.EncryptString("[Server] You have left the Pictionary Lobby")));
+							pictionaryLobby.Remove(client);
+						}
+
+						if(pictionaryLobby.Count > 1)
+						{
+							playingPictionary = true;
+							TcpSendDataToSpecificClient(client, new Packets.ChatMessagePacket(client.EncryptString("[Server] Pictionary Game Started")));
+						}
+						else
+						{
+							playingPictionary = false;
+						}
+					}
+					
+					break;
 				
 				case Packets.Packet.PacketType.Disconnect:
 					threads.RemoveAt(connectedClients.IndexOf(client));
@@ -175,6 +217,13 @@ namespace Server
 					client.CloseConnection();
 					UpdateClientsOnlineBox();
 					break;
+
+				case Packets.Packet.PacketType.PictionaryChatMessage:
+					Packets.PictionaryChatMessagePacket pictionaryChatMessagePacket = data as Packets.PictionaryChatMessagePacket;
+					string pictionaryChatMessage = client.DecryptString(pictionaryChatMessagePacket.Message);
+					SendEncryptedPictionartChatPacket("[" + client.GetNickname() + "] " + pictionaryChatMessage);
+					PrintToConsoleAsLogMessage("[TCP] [" + pictionaryChatMessagePacket.m_PacketType + "] from [" + client.GetNickname() + " " + client.GetSocket().RemoteEndPoint + "] Message: " + pictionaryChatMessage);
+					break;
 			}
 		}
 
@@ -183,6 +232,14 @@ namespace Server
 			foreach (ConnectedClient client in connectedClients)
 			{
 				client.TcpSend(new Packets.ChatMessagePacket(client.EncryptString(message)));
+			}
+		}
+
+		private void SendEncryptedPictionartChatPacket(string message)
+		{
+			foreach (ConnectedClient client in connectedClients)
+			{
+				client.TcpSend(new Packets.PictionaryChatMessagePacket(client.EncryptString(message)));
 			}
 		}
 
