@@ -20,7 +20,8 @@ namespace Packets
 			ClientList,
 			GameConnectionPacket,
 			PictionaryChatMessage,
-			PictionaryPaint
+			PictionaryPaint,
+			PictionaryClearCanvas
 		}
 
 		public enum GameType
@@ -269,6 +270,15 @@ namespace Packets
 		{
 			get { return penColor; }
 			set { }
+		}
+	}
+
+	[Serializable()]
+	public class PictionaryClearCanvasPacket : Packet
+	{
+		public PictionaryClearCanvasPacket()
+		{
+			m_PacketType = PacketType.PictionaryClearCanvas;
 		}
 	}
 }

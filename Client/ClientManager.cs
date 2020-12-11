@@ -130,6 +130,10 @@ namespace Client
 							Packets.PictionaryPaintPacket paintPacket = recievedPacket as Packets.PictionaryPaintPacket;
 							pictionaryForm.UpdatePaintCanvas(paintPacket.XPositions, paintPacket.YPositions, paintPacket.PenColor);
 							break;
+
+						case Packets.Packet.PacketType.PictionaryClearCanvas:
+							pictionaryForm.ClearCanvas();
+							break;
 					}
 				}
 			}
@@ -172,8 +176,8 @@ namespace Client
 						break;
 
 					case Packets.Packet.PacketType.PictionaryChatMessage:
-						Packets.PictionaryChatMessagePacket pictionaryChatMessage = serverResponse as Packets.PictionaryChatMessagePacket;
-						pictionaryForm.UpdateChatWindow(DecryptString(pictionaryChatMessage.message), Colors.Black);
+						Packets.PictionaryChatMessagePacket pictionaryChatMessagePacket = serverResponse as Packets.PictionaryChatMessagePacket;
+						pictionaryForm.UpdateChatWindow(DecryptString(pictionaryChatMessagePacket.message), Colors.Black);
 						break;
 				}
 			}

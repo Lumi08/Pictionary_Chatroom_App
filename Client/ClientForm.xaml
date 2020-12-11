@@ -20,6 +20,7 @@
         <ComboBox x:Name="ClientsComboBox" VerticalAlignment="Bottom" Height="24" Margin="0,0,270,0" SelectedIndex="0">
             <ComboBoxItem Content="[All]"/>
         </ComboBox>
+        
         <TextBox x:Name="InputField" VerticalAlignment="Bottom" Height="24" Margin="100,0,0,0" TextWrapping="Wrap" IsReadOnly="True" KeyDown="InputField_KeyDown"/>
         <Button x:Name="ConnectButton" Content="Connect" Margin="0,0,190,370" 
                 Click="ConnectButton_Click" Background="#FF67D162"/>

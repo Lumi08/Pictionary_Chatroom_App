@@ -40,6 +40,8 @@ namespace Client
 			linePointsY = new List<double>();
 			clientManager = client;
 			penColor = Colors.Black;
+			ChatBox.Foreground = new SolidColorBrush(Colors.Gray);
+			ChatBox.AppendText("Welcome to Pictionary!");
 		}
 
 		private void createGridOfColor()
@@ -147,7 +149,7 @@ namespace Client
 				linePointsX.Add(e.GetPosition(PaintCanvas).X);
 				linePointsY.Add(e.GetPosition(PaintCanvas).Y);
 
-				if (linePointsX.Count >= 40)
+				if (linePointsX.Count >= 20)
 				{
 					Packets.PictionaryPaintPacket packet = new Packets.PictionaryPaintPacket(linePointsX, linePointsY);
 					packet.SetPenColour(penColor.ScR, penColor.ScG, penColor.ScB, penColor.ScA);
@@ -172,7 +174,16 @@ namespace Client
 
 		public void ClearCanvas()
 		{
-			this.PaintCanvas.Strokes.Clear();
+			PaintCanvas.Dispatcher.Invoke(() =>
+			{
+				this.PaintCanvas.Strokes.Clear();
+				this.PaintCanvas.Children.Clear();
+			});
+		}
+
+		private void ClearButton_Click(object sender, RoutedEventArgs e)
+		{
+			clientManager.UdpSendDataToServer(new Packets.PictionaryClearCanvasPacket());
 		}
 	}
 }
