@@ -128,7 +128,7 @@ namespace Client
 					{
 						case Packets.Packet.PacketType.PictionaryPaint:
 							Packets.PictionaryPaintPacket paintPacket = recievedPacket as Packets.PictionaryPaintPacket;
-							pictionaryForm.UpdatePaintCanvas(paintPacket.XPositions, paintPacket.YPositions);
+							pictionaryForm.UpdatePaintCanvas(paintPacket.XPositions, paintPacket.YPositions, paintPacket.PenColor);
 							break;
 					}
 				}

@@ -25,9 +25,10 @@ namespace Client
 	/// </summary>
 	public partial class PictionaryForm : Window
 	{
-		ClientManager clientManager;
-		List<double> linePointsX;
-		List<double> linePointsY;
+		private ClientManager clientManager;
+		private List<double> linePointsX;
+		private List<double> linePointsY;
+		private Color penColor;
 
 		public PictionaryForm(ClientManager client)
 		{
@@ -38,6 +39,7 @@ namespace Client
 			linePointsX = new List<double>();
 			linePointsY = new List<double>();
 			clientManager = client;
+			penColor = Colors.Black;
 		}
 
 		private void createGridOfColor()
@@ -58,12 +60,8 @@ namespace Client
 		private void b_Click(object sender, RoutedEventArgs e)
 		{
 			SolidColorBrush sb = (SolidColorBrush)(sender as Button).Background;
-			//currColor = sb.Color;
-		}
-
-		private void ClearButton_Click(object sender, RoutedEventArgs e)
-		{
-			this.PaintCanvas.Strokes.Clear();
+			penColor = sb.Color;
+			PaintCanvas.DefaultDrawingAttributes.Color = sb.Color;
 		}
 
 		private void button2_Click(object sender, RoutedEventArgs e)
@@ -98,11 +96,10 @@ namespace Client
 			});
 		}
 
-		public void UpdatePaintCanvas(double[] xPositions, double[] yPositions)
+		public void UpdatePaintCanvas(double[] xPositions, double[] yPositions, float[] penColor)
 		{
 			PaintCanvas.Dispatcher.Invoke(() =>
-			{
-
+			{ 
 				for (int i = 0; i < xPositions.Length - 1; i++)
 				{
 					Line l = new Line();
@@ -111,7 +108,14 @@ namespace Client
 					l.X2 = xPositions[i + 1];
 					l.Y2 = yPositions[i + 1];
 
-					l.Stroke = new SolidColorBrush(Colors.Black);
+					if (penColor != null)
+					{
+						l.Stroke = new SolidColorBrush(Color.FromScRgb(penColor[3], penColor[0], penColor[1], penColor[2]));
+					}
+					else
+					{
+						l.Stroke = new SolidColorBrush(Colors.Black);
+					}
 					l.StrokeThickness = 2;
 					PaintCanvas.Children.Add(l);
 				}
@@ -145,7 +149,9 @@ namespace Client
 
 				if (linePointsX.Count >= 40)
 				{
-					clientManager.UdpSendDataToServer(new Packets.PictionaryPaintPacket(linePointsX, linePointsY));
+					Packets.PictionaryPaintPacket packet = new Packets.PictionaryPaintPacket(linePointsX, linePointsY);
+					packet.SetPenColour(penColor.ScR, penColor.ScG, penColor.ScB, penColor.ScA);
+					clientManager.UdpSendDataToServer(packet);
 					linePointsX.Clear();
 					linePointsY.Clear();
 				}
@@ -155,11 +161,18 @@ namespace Client
 			{
 				if (linePointsX.Count != 0)
 				{
-					clientManager.UdpSendDataToServer(new Packets.PictionaryPaintPacket(linePointsX, linePointsY));
+					Packets.PictionaryPaintPacket packet = new Packets.PictionaryPaintPacket(linePointsX, linePointsY);
+					packet.SetPenColour(penColor.ScR, penColor.ScG, penColor.ScB, penColor.ScA);
+					clientManager.UdpSendDataToServer(packet);
 					linePointsX.Clear();
 					linePointsY.Clear();
 				}
 			}
+		}
+
+		public void ClearCanvas()
+		{
+			this.PaintCanvas.Strokes.Clear();
 		}
 	}
 }

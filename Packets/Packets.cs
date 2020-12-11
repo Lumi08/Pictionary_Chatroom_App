@@ -228,13 +228,14 @@ namespace Packets
 	{
 		private double[] xPositions;
 		private double[] yPositions;
+		private float[] penColor = new float[4];
 
 		public PictionaryPaintPacket(List<double> xPos, List<double> yPos)
 		{
 			xPositions = new double[xPos.Count];
 			yPositions = new double[yPos.Count];
 			m_PacketType = PacketType.PictionaryPaint;
-			for(int i = 0; i < xPos.Count; i++)
+			for (int i = 0; i < xPos.Count; i++)
 			{
 				xPositions[i] = xPos[i];
 			}
@@ -253,6 +254,20 @@ namespace Packets
 		public double[] YPositions
 		{
 			get { return yPositions; }
+			set { }
+		}
+
+		public void SetPenColour(float r, float g, float b, float a)
+		{
+			penColor[0] = r;
+			penColor[1] = g;
+			penColor[2] = b;
+			penColor[3] = a;
+		}
+
+		public float[] PenColor
+		{
+			get { return penColor; }
 			set { }
 		}
 	}
