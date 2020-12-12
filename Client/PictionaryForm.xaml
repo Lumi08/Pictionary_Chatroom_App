@@ -9,7 +9,7 @@
         ResizeMode="NoResize"
         Closing="Window_Closing">
     <Grid>
-        <InkCanvas x:FieldModifier="public" x:Name="PaintCanvas" HorizontalAlignment="Stretch" Margin="150,10,295,100" VerticalAlignment="Stretch" MouseMove="PaintCanvas_MouseMove" />
+        <InkCanvas x:FieldModifier="public" x:Name="PaintCanvas" HorizontalAlignment="Stretch" Margin="150,10,290,100" VerticalAlignment="Stretch" MouseMove="PaintCanvas_MouseMove" UseCustomCursor="True" Cursor="Pen" />
         <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="150,10,290,100"/>
         <RichTextBox x:Name="ChatBox" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="710,10,10,130">
             <RichTextBox.Resources>
@@ -25,9 +25,26 @@
         <TextBox x:Name="ClientsBox" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,10,850,100" TextWrapping="Wrap" />
         <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,10,850,100"/>
 
-        <UniformGrid Margin="250,376,10,10" x:Name="colorGrid" Columns="40" Rows="5"/>
-
-        <ComboBox x:Name="ColorsComboBox" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="150,420,750,20"/>
-        <Button Content="Clear Canvas"  Margin="150,376,750,60" Click="ClearButton_Click"/>
+        <ComboBox Name="comboColors" Margin="150,376,290,60" SelectionChanged="ComboColors_SelectionChanged">
+            <ComboBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Grid Loaded="table_Loaded" />
+                </ItemsPanelTemplate>
+            </ComboBox.ItemsPanel>
+            <ComboBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <Rectangle Fill="{Binding Name}" Width="16" Height="16" Margin="0 2 5 2" />
+                        <TextBlock Text="{Binding Name}" />
+                    </StackPanel>
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
+        <ComboBox x:Name="ToolsComboBox" Margin="250,410,650,20" SelectedIndex="0" FontSize="16" VerticalContentAlignment="Center" SelectionChanged="ToolsComboBox_SelectionChanged">
+            <ComboBoxItem Content="Pen"/>
+            <ComboBoxItem Content="Eraser"/>
+            <ComboBoxItem Content="Fill"/>
+        </ComboBox>
+        <Button Content="Clear Canvas"  Margin="150,410,750,20" Click="ClearButton_Click"/>
     </Grid>
 </Window>

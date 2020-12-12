@@ -29,41 +29,60 @@ namespace Client
 		private List<double> linePointsX;
 		private List<double> linePointsY;
 		private Color penColor;
+		private PaintTool paintTool;
+		private static readonly int COLUMS = 5;
+
+		private Point lastRecievedPoint;
+		private bool newLine;
+
+		private enum PaintTool
+		{
+			Pen,
+			Eraser,
+			Fill
+		}
 
 		public PictionaryForm(ClientManager client)
 		{
 			InitializeComponent();
 
-			createGridOfColor();
-
 			linePointsX = new List<double>();
 			linePointsY = new List<double>();
 			clientManager = client;
+			newLine = true;
+			paintTool = PaintTool.Pen;
 			penColor = Colors.Black;
+			comboColors.ItemsSource = typeof(Colors).GetProperties();
 			ChatBox.Foreground = new SolidColorBrush(Colors.Gray);
+			PaintCanvas.DefaultDrawingAttributes.Width = 2;
 			ChatBox.AppendText("Welcome to Pictionary!");
 		}
 
-		private void createGridOfColor()
+		private void table_Loaded(object sender, RoutedEventArgs e)
 		{
-			PropertyInfo[] props = typeof(Brushes).GetProperties(BindingFlags.Public |
-												  BindingFlags.Static);
-			// Create individual items
-			foreach (PropertyInfo p in props)
+			Grid grid = sender as Grid;
+			if (grid != null)
 			{
-				Button b = new Button();
-				b.Background = (SolidColorBrush)p.GetValue(null, null);
-				b.Foreground = Brushes.Transparent;
-				b.BorderBrush = Brushes.Transparent;
-				b.Click += new RoutedEventHandler(b_Click);
-				this.colorGrid.Children.Add(b);
+				if (grid.RowDefinitions.Count == 0)
+				{
+					for (int r = 0; r <= comboColors.Items.Count / COLUMS; r++)
+					{
+						grid.RowDefinitions.Add(new RowDefinition());
+					}
+				}
+				if (grid.ColumnDefinitions.Count == 0)
+				{
+					for (int c = 0; c < Math.Min(comboColors.Items.Count, COLUMS); c++)
+					{
+						grid.ColumnDefinitions.Add(new ColumnDefinition());
+					}
+				}
+				for (int i = 0; i < grid.Children.Count; i++)
+				{
+					Grid.SetColumn(grid.Children[i], i % COLUMS);
+					Grid.SetRow(grid.Children[i], i / COLUMS);
+				}
 			}
-		}
-		private void b_Click(object sender, RoutedEventArgs e)
-		{
-			SolidColorBrush sb = (SolidColorBrush)(sender as Button).Background;
-			penColor = sb.Color;
-			PaintCanvas.DefaultDrawingAttributes.Color = sb.Color;
 		}
 
 		private void button2_Click(object sender, RoutedEventArgs e)
@@ -98,10 +117,29 @@ namespace Client
 			});
 		}
 
-		public void UpdatePaintCanvas(double[] xPositions, double[] yPositions, float[] penColor)
+		public void UpdatePaintCanvas(double[] xPositions, double[] yPositions, float[] penColor, bool sameLine)
 		{
 			PaintCanvas.Dispatcher.Invoke(() =>
-			{ 
+			{
+				if(sameLine)
+				{
+					Line connectionLine = new Line();
+					connectionLine.X1 = lastRecievedPoint.X;
+					connectionLine.Y1 = lastRecievedPoint.Y;
+					connectionLine.X2 = xPositions[0];
+					connectionLine.Y2 = yPositions[0];
+					if (penColor != null)
+					{
+						connectionLine.Stroke = new SolidColorBrush(Color.FromScRgb(penColor[3], penColor[0], penColor[1], penColor[2]));
+					}
+					else
+					{
+						connectionLine.Stroke = new SolidColorBrush(Colors.Black);
+					}
+					connectionLine.StrokeThickness = 2;
+					PaintCanvas.Children.Add(connectionLine);
+				}
+
 				for (int i = 0; i < xPositions.Length - 1; i++)
 				{
 					Line l = new Line();
@@ -121,6 +159,8 @@ namespace Client
 					l.StrokeThickness = 2;
 					PaintCanvas.Children.Add(l);
 				}
+
+				lastRecievedPoint = new Point(xPositions[xPositions.Length-1], yPositions[yPositions.Length-1]);
 			});
 		}
 
@@ -142,8 +182,6 @@ namespace Client
 
 		private void PaintCanvas_MouseMove(object sender, MouseEventArgs e)
 		{
-			//Thread sendDataThread = new Thread(() => { clientManager.UdpSendDataToServer(new Packets.PictionaryPaintPacket(linePointsX, linePointsY); });
-
 			if (e.LeftButton == MouseButtonState.Pressed)
 			{
 				linePointsX.Add(e.GetPosition(PaintCanvas).X);
@@ -151,8 +189,16 @@ namespace Client
 
 				if (linePointsX.Count >= 20)
 				{
-					Packets.PictionaryPaintPacket packet = new Packets.PictionaryPaintPacket(linePointsX, linePointsY);
-					packet.SetPenColour(penColor.ScR, penColor.ScG, penColor.ScB, penColor.ScA);
+					Packets.PictionaryPaintPacket packet = new Packets.PictionaryPaintPacket(linePointsX, linePointsY, newLine);
+					newLine = true;
+					if(paintTool == PaintTool.Eraser)
+					{
+						packet.SetPenColour(Colors.White.ScR, Colors.White.ScG, Colors.White.ScB, Colors.White.ScA);
+					}
+					if (paintTool == PaintTool.Pen)
+					{
+						packet.SetPenColour(penColor.ScR, penColor.ScG, penColor.ScB, penColor.ScA);
+					}
 					clientManager.UdpSendDataToServer(packet);
 					linePointsX.Clear();
 					linePointsY.Clear();
@@ -161,10 +207,18 @@ namespace Client
 
 			if (e.LeftButton == MouseButtonState.Released)
 			{
+				newLine = false;
 				if (linePointsX.Count != 0)
 				{
-					Packets.PictionaryPaintPacket packet = new Packets.PictionaryPaintPacket(linePointsX, linePointsY);
-					packet.SetPenColour(penColor.ScR, penColor.ScG, penColor.ScB, penColor.ScA);
+					Packets.PictionaryPaintPacket packet = new Packets.PictionaryPaintPacket(linePointsX, linePointsY, true);
+					if (paintTool == PaintTool.Eraser)
+					{
+						packet.SetPenColour(Colors.White.ScR, Colors.White.ScG, Colors.White.ScB, Colors.White.ScA);
+					}
+					if (paintTool == PaintTool.Pen)
+					{
+						packet.SetPenColour(penColor.ScR, penColor.ScG, penColor.ScB, penColor.ScA);
+					}
 					clientManager.UdpSendDataToServer(packet);
 					linePointsX.Clear();
 					linePointsY.Clear();
@@ -184,6 +238,36 @@ namespace Client
 		private void ClearButton_Click(object sender, RoutedEventArgs e)
 		{
 			clientManager.UdpSendDataToServer(new Packets.PictionaryClearCanvasPacket());
+		}
+
+		private void ComboColors_SelectionChanged(object sender, SelectionChangedEventArgs e)
+		{
+			PropertyInfo[] props = typeof(Brushes).GetProperties(BindingFlags.Public |
+												  BindingFlags.Static);
+
+			SolidColorBrush temp = (SolidColorBrush)(props[(sender as ComboBox).SelectedIndex].GetValue(null, null));
+			penColor = temp.Color;
+			PaintCanvas.DefaultDrawingAttributes.Color = penColor;
+
+			UpdateChatWindow((sender as ComboBox).SelectedIndex.ToString(), Colors.Red);
+		}
+
+		private void ToolsComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+		{
+			if((sender as ComboBox).SelectedIndex == 0)
+			{
+				paintTool = PaintTool.Pen;
+				PaintCanvas.EditingMode = InkCanvasEditingMode.Ink;
+			}
+			if ((sender as ComboBox).SelectedIndex == 1)
+			{
+				paintTool = PaintTool.Eraser;
+				PaintCanvas.EditingMode = InkCanvasEditingMode.EraseByPoint;
+			}
+			if ((sender as ComboBox).SelectedIndex == 2)
+			{
+				paintTool = PaintTool.Fill;
+			}
 		}
 	}
 }

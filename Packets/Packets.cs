@@ -230,8 +230,10 @@ namespace Packets
 		private double[] xPositions;
 		private double[] yPositions;
 		private float[] penColor = new float[4];
+		private int penThickness;
+		private bool sameLine;
 
-		public PictionaryPaintPacket(List<double> xPos, List<double> yPos)
+		public PictionaryPaintPacket(List<double> xPos, List<double> yPos, bool SameLine)
 		{
 			xPositions = new double[xPos.Count];
 			yPositions = new double[yPos.Count];
@@ -244,6 +246,7 @@ namespace Packets
 			{
 				yPositions[i] = yPos[i];
 			}
+			this.sameLine = SameLine;
 		}
 
 		public double[] XPositions
@@ -269,6 +272,12 @@ namespace Packets
 		public float[] PenColor
 		{
 			get { return penColor; }
+			set { }
+		}
+
+		public bool SameLine
+		{
+			get { return sameLine; }
 			set { }
 		}
 	}
