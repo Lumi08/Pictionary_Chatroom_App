@@ -40,7 +40,7 @@ namespace Client
 		public ClientManager()
 		{
 			clientForm = new ClientForm(this);
-			pictionaryForm = new PictionaryForm(this);
+			//pictionaryForm = new PictionaryForm(this);
 			rsaProvider = new RSACryptoServiceProvider(1024);
 			publicKey = rsaProvider.ExportParameters(false);
 			privateKey = rsaProvider.ExportParameters(true);
@@ -286,14 +286,13 @@ namespace Client
 
 		public void Close()
 		{
-			if (pictionaryForm != null)
-			{
-				pictionaryForm.Close();
-			}
 			if(clientForm.isConnected)
 			{
-				tcpNetworkProcessingThread.Abort();
+				if (pictionaryForm != null)
+					pictionaryForm.Close();
+
 				TcpSendDataToServer(new Packets.DisconnectPacket());
+				tcpNetworkProcessingThread.Abort();
 				udpClient.Close();
 				tcpClient.Close();
 			}

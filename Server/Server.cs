@@ -178,8 +178,8 @@ namespace Server
 					{
 						if(pictionaryLobby.Contains(client))
 						{
-							SendEncryptedChatPacket("[Server] " + client.GetNickname() + " have left the Pictionary Lobby [" + pictionaryLobby.Count + "|" + pictionaryLobbyMaxSize + "]");
 							pictionaryLobby.Remove(client);
+							SendEncryptedChatPacket("[Server] " + client.GetNickname() + " has left the Pictionary Lobby [" + pictionaryLobby.Count + "|" + pictionaryLobbyMaxSize + "]");
 							if (playingPictionary)
 							{
 								foreach (ConnectedClient c in pictionaryLobby)
@@ -213,10 +213,17 @@ namespace Server
 					break;
 				
 				case Packets.Packet.PacketType.Disconnect:
-					threads.RemoveAt(connectedClients.IndexOf(client));
-					connectedClients.Remove(client);
 					PrintToConsoleAsLogMessage("[TCP] " + client.GetNickname() + " Left The Server. [" + client.GetSocket().RemoteEndPoint + "]");
 					SendEncryptedChatPacket("[Server] " + client.GetNickname() + " has left the chat!");
+					if(pictionaryLobby.Contains(client))
+					{
+						SendEncryptedPictionartChatPacket("[Server] " + client.GetNickname() + " has Left the Game!");
+						SendEncryptedChatPacket("[Server] " + client.GetNickname() + " has left the Pictionary Lobby [" + pictionaryLobby.Count + "|" + pictionaryLobbyMaxSize + "]");
+						pictionaryLobby.Remove(client);
+					}
+					threads.RemoveAt(connectedClients.IndexOf(client));
+					connectedClients.Remove(client);
+
 					client.CloseConnection();
 					UpdateClientsOnlineBox();
 					break;
@@ -237,10 +244,8 @@ namespace Server
 						{
 							TcpSendDataToSpecificClient(c, new Packets.PictionaryClearCanvasPacket());
 						}
-
 						StartPictionaryRound();
 					}
-
 					break;
 			}
 		}

@@ -21,7 +21,7 @@
 
         <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="710,10,10,130"/>
         <TextBox x:Name="InputField" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="710,340,10,100" TextWrapping="Wrap" KeyDown="InputField_KeyDown"/>
-        <TextBlock IsHitTestVisible="False" Text="Enter A Message" Margin="710,340,10,100" Foreground="DarkGray" VerticalAlignment="Top" TextAlignment="Left">
+        <TextBlock IsHitTestVisible="False" Text="Enter A Message" Margin="715,340,10,100" Foreground="DarkGray" VerticalAlignment="Top" TextAlignment="Left">
             <TextBlock.Style>
                 <Style TargetType="{x:Type TextBlock}">
                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -55,7 +55,6 @@
         <ComboBox x:Name="ToolsComboBox" Margin="250,410,650,20" SelectedIndex="0" FontSize="16" VerticalContentAlignment="Center" SelectionChanged="ToolsComboBox_SelectionChanged">
             <ComboBoxItem Content="Pen"/>
             <ComboBoxItem Content="Eraser"/>
-            <ComboBoxItem Content="Fill"/>
         </ComboBox>
         <Button x:Name="ClearButton" Content="Clear Canvas"  Margin="150,410,750,20" Click="ClearButton_Click"/>
         <Label x:Name="ItemToDrawLabel" Margin="360,410,290,20" FontSize="16" Content="Drawing: " FontWeight="Bold"/>

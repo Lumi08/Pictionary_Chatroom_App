@@ -287,10 +287,6 @@ namespace Client
 				paintTool = PaintTool.Eraser;
 				PaintCanvas.EditingMode = InkCanvasEditingMode.EraseByPoint;
 			}
-			if ((sender as ComboBox).SelectedIndex == 2)
-			{
-				paintTool = PaintTool.Fill;
-			}
 		}
 	}
 }
