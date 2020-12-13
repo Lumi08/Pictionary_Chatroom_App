@@ -45,6 +45,7 @@ namespace Client
 		public PictionaryForm(ClientManager client)
 		{
 			InitializeComponent();
+			ColorComboBox.SelectedIndex = 7;
 
 			linePointsX = new List<double>();
 			linePointsY = new List<double>();
@@ -52,7 +53,7 @@ namespace Client
 			newLine = true;
 			paintTool = PaintTool.Pen;
 			penColor = Colors.Black;
-			comboColors.ItemsSource = typeof(Colors).GetProperties();
+			ColorComboBox.ItemsSource = typeof(Colors).GetProperties();
 			ChatBox.Foreground = new SolidColorBrush(Colors.Gray);
 			PaintCanvas.DefaultDrawingAttributes.Width = 2;
 			ChatBox.AppendText("Welcome to Pictionary!");
@@ -65,14 +66,14 @@ namespace Client
 			{
 				if (grid.RowDefinitions.Count == 0)
 				{
-					for (int r = 0; r <= comboColors.Items.Count / COLUMS; r++)
+					for (int r = 0; r <= ColorComboBox.Items.Count / COLUMS; r++)
 					{
 						grid.RowDefinitions.Add(new RowDefinition());
 					}
 				}
 				if (grid.ColumnDefinitions.Count == 0)
 				{
-					for (int c = 0; c < Math.Min(comboColors.Items.Count, COLUMS); c++)
+					for (int c = 0; c < Math.Min(ColorComboBox.Items.Count, COLUMS); c++)
 					{
 						grid.ColumnDefinitions.Add(new ColumnDefinition());
 					}
@@ -85,22 +86,9 @@ namespace Client
 			}
 		}
 
-		private void button2_Click(object sender, RoutedEventArgs e)
-		{
-			byte[] data;
-			using (MemoryStream ms = new MemoryStream())
-			{
-				ms.Position = 0;
-				PaintCanvas.Strokes.Save(ms);
-				data = ms.ToArray();
-			}
-
-			//clientManager.UdpSendDataToServer(new Packets.PictionaryPaintPacket(data));
-		}
-
 		private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
 		{
-
+			clientManager.TcpSendDataToServer(new Packets.GameConnectionPacket(Packets.Packet.GameType.Pictionary));
 		}
 
 		public void UpdateChatWindow(string message, Color color)
@@ -121,7 +109,7 @@ namespace Client
 		{
 			PaintCanvas.Dispatcher.Invoke(() =>
 			{
-				if(sameLine)
+				if (sameLine)
 				{
 					Line connectionLine = new Line();
 					connectionLine.X1 = lastRecievedPoint.X;
@@ -148,18 +136,19 @@ namespace Client
 					l.X2 = xPositions[i + 1];
 					l.Y2 = yPositions[i + 1];
 
+					
 					if (penColor != null)
-					{
+					{	
 						l.Stroke = new SolidColorBrush(Color.FromScRgb(penColor[3], penColor[0], penColor[1], penColor[2]));
 					}
 					else
 					{
 						l.Stroke = new SolidColorBrush(Colors.Black);
 					}
+		
 					l.StrokeThickness = 2;
 					PaintCanvas.Children.Add(l);
 				}
-
 				lastRecievedPoint = new Point(xPositions[xPositions.Length-1], yPositions[yPositions.Length-1]);
 			});
 		}
@@ -226,6 +215,41 @@ namespace Client
 			}
 		}
 
+		public void SetUpDrawer(bool isDrawer)
+		{
+			if(!isDrawer)
+			{
+				PaintCanvas.IsEnabled = false;
+				ColorComboBox.IsEnabled = false;
+				ColorComboBox.Visibility = Visibility.Hidden;
+				ToolsComboBox.IsEnabled = false;
+				ToolsComboBox.Visibility = Visibility.Hidden;
+				ClearButton.IsEnabled = false;
+				ClearButton.Visibility = Visibility.Hidden;
+				ItemToDrawLabel.Visibility = Visibility.Hidden;
+				InputField.IsReadOnly = false;
+			}
+			else
+			{
+				PaintCanvas.IsEnabled = true;
+				ColorComboBox.IsEnabled = true;
+				ColorComboBox.Visibility = Visibility.Visible;
+				ToolsComboBox.IsEnabled = true;
+				ToolsComboBox.Visibility = Visibility.Visible;
+				ClearButton.IsEnabled = true;
+				ClearButton.Visibility = Visibility.Visible;
+				ItemToDrawLabel.Visibility = Visibility.Visible;
+				InputField.IsReadOnly = true;
+			}
+		}
+
+		public void RecievedWordToDraw(string wordToDraw)
+		{
+			ItemToDrawLabel.Dispatcher.Invoke(() => { 
+				ItemToDrawLabel.Content = "Drawing: " + wordToDraw;
+			});
+		}
+
 		public void ClearCanvas()
 		{
 			PaintCanvas.Dispatcher.Invoke(() =>
@@ -249,7 +273,6 @@ namespace Client
 			penColor = temp.Color;
 			PaintCanvas.DefaultDrawingAttributes.Color = penColor;
 
-			UpdateChatWindow((sender as ComboBox).SelectedIndex.ToString(), Colors.Red);
 		}
 
 		private void ToolsComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)

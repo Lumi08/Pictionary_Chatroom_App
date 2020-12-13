@@ -87,6 +87,7 @@ namespace Client
 
 				tcpNetworkProcessingThread.Start();
 				udpNetworkProcessingThread.Start();
+				clientForm.Title = "Chat Facility  |  Nickname: " + nickname;
 				return true;
 			}
 			else
@@ -99,17 +100,7 @@ namespace Client
 
 		public void PlayPictionary()
 		{
-			playingPictionary = !playingPictionary;
-			if(playingPictionary)
-			{
-				TcpSendDataToServer(new Packets.GameConnectionPacket(Packets.Packet.GameType.Pictionary, true));
-			}
-			else
-			{
-				TcpSendDataToServer(new Packets.GameConnectionPacket(Packets.Packet.GameType.Pictionary, false));
-			}
-
-			pictionaryForm.Show();
+			TcpSendDataToServer(new Packets.GameConnectionPacket(Packets.Packet.GameType.Pictionary));
 		}
 
 		//Processing server response
@@ -179,8 +170,45 @@ namespace Client
 						Packets.PictionaryChatMessagePacket pictionaryChatMessagePacket = serverResponse as Packets.PictionaryChatMessagePacket;
 						pictionaryForm.UpdateChatWindow(DecryptString(pictionaryChatMessagePacket.message), Colors.Black);
 						break;
+
+					case Packets.Packet.PacketType.PictionarySetupClient:
+						Packets.PictionarySetupClientPacket pictionarySetupClientPacket = serverResponse as Packets.PictionarySetupClientPacket;
+						SetUpPictionary(pictionarySetupClientPacket.IsDrawer);
+						break;
+
+					case Packets.Packet.PacketType.PictionaryWordToDraw:
+						Packets.PictionaryWordToDrawPacket pictionaryWordToDrawPacket = serverResponse as Packets.PictionaryWordToDrawPacket;
+						pictionaryForm.RecievedWordToDraw(DecryptString(pictionaryWordToDrawPacket.WordToDraw));
+						break;
+
+					case Packets.Packet.PacketType.PictionaryClearCanvas:
+						pictionaryForm.ClearCanvas();
+						break;
 				}
 			}
+		}
+
+		public void SetUpPictionary(bool isDrawer)
+		{
+			clientForm.Dispatcher.Invoke(() => 
+			{
+				if(pictionaryForm == null || !pictionaryForm.IsVisible)
+				{
+					pictionaryForm = new PictionaryForm(this);
+					pictionaryForm.SetUpDrawer(isDrawer);
+					pictionaryForm.Title = "Pictionary  |  Nickname: " + clientNickname;
+					pictionaryForm.Show();		
+				}
+
+				if(pictionaryForm.IsVisible)
+				{
+					pictionaryForm.SetUpDrawer(isDrawer);
+				}
+			});
+		}
+
+		public void PictionaryFormClosed()
+		{
 		}
 
 		//Server Data management
@@ -207,7 +235,6 @@ namespace Client
 		public Packets.Packet TcpReadDataFromserver()
 		{
 			int numberOfBytes;
-
 			try
 			{
 				if ((numberOfBytes = reader.ReadInt32()) != -1)
@@ -259,7 +286,10 @@ namespace Client
 
 		public void Close()
 		{
-			pictionaryForm.Close();
+			if (pictionaryForm != null)
+			{
+				pictionaryForm.Close();
+			}
 			if(clientForm.isConnected)
 			{
 				tcpNetworkProcessingThread.Abort();

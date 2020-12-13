@@ -21,7 +21,10 @@ namespace Packets
 			GameConnectionPacket,
 			PictionaryChatMessage,
 			PictionaryPaint,
-			PictionaryClearCanvas
+			PictionaryClearCanvas,
+			PictionarySetupClient,
+			PictionaryWordToDraw,
+			PictionaryClientList
 		}
 
 		public enum GameType
@@ -42,7 +45,8 @@ namespace Packets
 	public class ChatMessagePacket : Packet
 	{
 		private byte[] message;
-
+		private float[] messageColor = new float[4];
+		
 		public ChatMessagePacket(byte[] message)
 		{
 			this.message = message;
@@ -183,24 +187,16 @@ namespace Packets
 	public class GameConnectionPacket : Packet
 	{
 		GameType gameToPlay;
-		bool connection;
 
-		public GameConnectionPacket(GameType game, bool connected)
+		public GameConnectionPacket(GameType game)
 		{
 			m_PacketType = PacketType.GameConnectionPacket;
 			gameToPlay = game;
-			this.connection = connected;
 		}
 
 		public GameType GameToPlay
 		{
 			get { return gameToPlay; }
-			set { }
-		}
-
-		public bool Connected
-		{
-			get { return connection; }
 			set { }
 		}
 	}
@@ -288,6 +284,66 @@ namespace Packets
 		public PictionaryClearCanvasPacket()
 		{
 			m_PacketType = PacketType.PictionaryClearCanvas;
+		}
+	}
+
+	[Serializable()]
+	public class PictionarySetupClientPacket : Packet
+	{
+		private bool isDrawer;
+
+		public PictionarySetupClientPacket(bool drawer)
+		{
+			m_PacketType = PacketType.PictionarySetupClient;
+			this.isDrawer = drawer;
+		}
+
+		public bool IsDrawer
+		{
+			get { return isDrawer; }
+			set { }
+		}
+	}
+
+	[Serializable()]
+	public class PictionaryWordToDrawPacket: Packet
+	{
+		private byte[] word;
+		public PictionaryWordToDrawPacket(byte[] word)
+		{
+			m_PacketType = PacketType.PictionaryWordToDraw;
+			this.word = word;
+		}
+
+		public byte[] WordToDraw
+		{
+			get { return word; }
+			set { }
+		}
+	}
+
+	public class PictionaryClientsPacket : Packet
+	{
+		private string[] clients;
+		private int[] scores;
+
+		public PictionaryClientsPacket(string[] clients, int[] scores)
+		{
+			m_PacketType = PacketType.PictionaryClientList;
+			this.clients = clients;
+			this.scores = scores;
+		}
+
+		public string[] Clients
+		{
+			get { return clients; }
+			set { }
+		}
+
+		public int[] Scores
+		{
+			get { return scores; }
+			set { }
 		}
 	}
 }

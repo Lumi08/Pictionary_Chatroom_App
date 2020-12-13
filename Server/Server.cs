@@ -20,12 +20,17 @@ namespace Server
 
 		private int maxClients;
 		private bool playingPictionary;
+		private string pictionaryCurrentWordBeingDrawn;
+		private int pictionaryLobbyMaxSize;
+		private int[] pictionaryScores;
 
-		public Server(string ipAddress, int port, int maxClients)
+		public Server(string ipAddress, int port, int maxClients, int pictionaryLobbyMaxSize)
 		{
 			tcpListener = new TcpListener(IPAddress.Parse(ipAddress), port);
 			udpListener = new UdpClient(port);
 			this.maxClients = maxClients;
+			this.pictionaryLobbyMaxSize = pictionaryLobbyMaxSize;
+			pictionaryScores = new int[pictionaryLobbyMaxSize];
 			playingPictionary = false;
 		}
 
@@ -36,11 +41,8 @@ namespace Server
 				tcpListener.Start();
 				Thread udpListenThread = new Thread(() => { UdpListen(); });
 				udpListenThread.Start();
-
-				Thread serverRunningThread = new Thread(() => { Run(); });
-				serverRunningThread.Start();
 			}
-			catch(Exception e)
+			catch (Exception e)
 			{
 				Console.WriteLine(e);
 				PrintToConsoleAsLogMessage("Error Making Server, you may already have a server running on your machine!");
@@ -49,9 +51,9 @@ namespace Server
 			}
 
 			PrintToConsoleAsLogMessage("Server Open to Client Connections");
-			
+
 			while (true)
-			{	
+			{
 				Socket clientSocket = tcpListener.AcceptSocket();
 				ConnectedClient newClient = new ConnectedClient(clientSocket);
 
@@ -65,17 +67,6 @@ namespace Server
 				{
 					TcpSendDataToSpecificClient(newClient, new Packets.DisconnectPacket());
 					Thread test = new Thread(() => { ClientMethod(newClient); });
-				}
-			}
-		}
-
-		public void Run()
-		{
-			while(true)
-			{
-				if(playingPictionary)
-				{
-					//SendEncryptedChatPacket("Playing Pictionary!");
 				}
 			}
 		}
@@ -185,28 +176,40 @@ namespace Server
 
 					if(gameConnectionPacket.GameToPlay == Packets.Packet.GameType.Pictionary)
 					{
-						if(gameConnectionPacket.Connected)
+						if(pictionaryLobby.Contains(client))
 						{
-							TcpSendDataToSpecificClient(client, new Packets.ChatMessagePacket(client.EncryptString("[Server] You have joined the Pictionary Lobby")));
-							pictionaryLobby.Add(client);
-						}
-						if (!gameConnectionPacket.Connected)
-						{
-							TcpSendDataToSpecificClient(client, new Packets.ChatMessagePacket(client.EncryptString("[Server] You have left the Pictionary Lobby")));
+							SendEncryptedChatPacket("[Server] " + client.GetNickname() + " have left the Pictionary Lobby [" + pictionaryLobby.Count + "|" + pictionaryLobbyMaxSize + "]");
 							pictionaryLobby.Remove(client);
-						}
-
-						if(pictionaryLobby.Count > 1)
-						{
-							playingPictionary = true;
-							TcpSendDataToSpecificClient(client, new Packets.ChatMessagePacket(client.EncryptString("[Server] Pictionary Game Started")));
+							if (playingPictionary)
+							{
+								foreach (ConnectedClient c in pictionaryLobby)
+								{
+									TcpSendDataToSpecificClient(c, new Packets.PictionaryChatMessagePacket(c.EncryptString("[Server] " + c.GetNickname() + " Has Left The Game!")));
+								}
+							}
+							if (pictionaryLobby.Count == 0)
+							{
+								playingPictionary = false;
+							}
 						}
 						else
 						{
-							playingPictionary = false;
+							if(pictionaryLobby.Count > pictionaryLobbyMaxSize - 1 || playingPictionary)
+							{
+								TcpSendDataToSpecificClient(client, new Packets.ChatMessagePacket(client.EncryptString("[Server] Server is Full")));
+							}
+							else
+							{
+								pictionaryLobby.Add(client);
+								SendEncryptedChatPacket("[Server] " + client.GetNickname() + " have joined the Pictionary Lobby [" + pictionaryLobby.Count + "|" + pictionaryLobbyMaxSize +"]");
+							}
+						}
+
+						if (pictionaryLobby.Count > pictionaryLobbyMaxSize - 1)
+						{
+							StartPictionaryRound();
 						}
 					}
-					
 					break;
 				
 				case Packets.Packet.PacketType.Disconnect:
@@ -223,8 +226,72 @@ namespace Server
 					string pictionaryChatMessage = client.DecryptString(pictionaryChatMessagePacket.Message);
 					SendEncryptedPictionartChatPacket("[" + client.GetNickname() + "] " + pictionaryChatMessage);
 					PrintToConsoleAsLogMessage("[TCP] [" + pictionaryChatMessagePacket.m_PacketType + "] from [" + client.GetNickname() + " " + client.GetSocket().RemoteEndPoint + "] Message: " + pictionaryChatMessage);
+
+					if(pictionaryChatMessage.ToLower() == pictionaryCurrentWordBeingDrawn)
+					{
+						pictionaryScores[pictionaryLobby.IndexOf(client)]++;
+						SendEncryptedPictionartChatPacket("[Server] " + client.GetNickname() + " Guessed The Word!");
+						SendEncryptedPictionartChatPacket("[Server] New Round!");
+
+						foreach(ConnectedClient c in pictionaryLobby)
+						{
+							TcpSendDataToSpecificClient(c, new Packets.PictionaryClearCanvasPacket());
+						}
+
+						StartPictionaryRound();
+					}
+
 					break;
 			}
+		}
+
+		private void StartPictionaryRound()
+		{
+			playingPictionary = true;
+			string[] pictionaryWordList = PictionaryWordsFromTextFile("F:/Projects/Chat-Facility/Server/PictionaryWords.txt");
+
+			if (pictionaryWordList == null)
+			{
+				foreach (ConnectedClient c in pictionaryLobby)
+				{
+					TcpSendDataToSpecificClient(c, new Packets.ChatMessagePacket(c.EncryptString("[Server Error] Pictionary Words couldnt be loaded")));
+				}
+				pictionaryLobby.Clear();
+				return;
+			}
+
+			Random rand = new Random();
+			int r = rand.Next(connectedClients.Count);
+			int r2 = rand.Next(pictionaryWordList.Length - 1);
+			pictionaryCurrentWordBeingDrawn = pictionaryWordList[r2];
+
+			for (int i = 0; i < pictionaryLobby.Count; i++)
+			{
+				if (i == r)
+				{
+					TcpSendDataToSpecificClient(pictionaryLobby[i], new Packets.PictionarySetupClientPacket(true));
+					TcpSendDataToSpecificClient(pictionaryLobby[i], new Packets.PictionaryWordToDrawPacket(pictionaryLobby[i].EncryptString(pictionaryCurrentWordBeingDrawn)));
+				}
+				else
+				{
+					TcpSendDataToSpecificClient(pictionaryLobby[i], new Packets.PictionarySetupClientPacket(false));
+				}
+			}
+			SendEncryptedPictionartChatPacket("[Server] " + pictionaryLobby[r].GetNickname() + " Is Drawing!");
+		}
+
+		private string[] PictionaryWordsFromTextFile(string path)
+		{
+			try
+			{
+				string[] lines = File.ReadAllLines(path);
+				return lines;
+			}
+			catch(Exception e)
+			{
+				Console.WriteLine(e);
+			}
+			return null;
 		}
 
 		private void SendEncryptedChatPacket(string message)
@@ -245,9 +312,9 @@ namespace Server
 
 		private void TcpBroadcastDataToAllClients(Packets.Packet packet)
 		{
-			foreach(ConnectedClient client in connectedClients)
+			foreach(ConnectedClient c in connectedClients)
 			{
-				client.TcpSend(packet);
+				c.TcpSend(packet);
 			}
 		}
 
@@ -268,6 +335,20 @@ namespace Server
 			}
 
 			TcpBroadcastDataToAllClients(new Packets.ClientsPacket(clients));
+		}
+
+		private void UpdatePictionaryClientsList()
+		{
+			string[] clients = new string[maxClients];
+
+			int i = 0;
+			foreach (ConnectedClient client in connectedClients)
+			{
+				clients[i] = client.GetNickname();
+				i++;
+			}
+
+			TcpBroadcastDataToAllClients(new Packets.PictionaryClientsPacket(clients, pictionaryScores));
 		}
 
 		public void Stop()
