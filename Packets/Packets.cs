@@ -321,29 +321,4 @@ namespace Packets
 			set { }
 		}
 	}
-
-	public class PictionaryClientsPacket : Packet
-	{
-		private string[] clients;
-		private int[] scores;
-
-		public PictionaryClientsPacket(string[] clients, int[] scores)
-		{
-			m_PacketType = PacketType.PictionaryClientList;
-			this.clients = clients;
-			this.scores = scores;
-		}
-
-		public string[] Clients
-		{
-			get { return clients; }
-			set { }
-		}
-
-		public int[] Scores
-		{
-			get { return scores; }
-			set { }
-		}
-	}
 }

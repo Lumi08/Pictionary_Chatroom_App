@@ -342,20 +342,6 @@ namespace Server
 			TcpBroadcastDataToAllClients(new Packets.ClientsPacket(clients));
 		}
 
-		private void UpdatePictionaryClientsList()
-		{
-			string[] clients = new string[maxClients];
-
-			int i = 0;
-			foreach (ConnectedClient client in connectedClients)
-			{
-				clients[i] = client.GetNickname();
-				i++;
-			}
-
-			TcpBroadcastDataToAllClients(new Packets.PictionaryClientsPacket(clients, pictionaryScores));
-		}
-
 		public void Stop()
 		{
 			tcpListener.Stop();

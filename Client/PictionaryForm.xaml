@@ -9,8 +9,8 @@
         ResizeMode="NoResize"
         Closing="Window_Closing">
     <Grid>
-        <InkCanvas x:FieldModifier="public" x:Name="PaintCanvas" HorizontalAlignment="Stretch" Margin="150,10,290,100" VerticalAlignment="Stretch" MouseMove="PaintCanvas_MouseMove" UseCustomCursor="True" Cursor="Pen"/>
-        <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="150,10,290,100"/>
+        <InkCanvas x:FieldModifier="public" x:Name="PaintCanvas" HorizontalAlignment="Stretch" Margin="10,10,290,100" VerticalAlignment="Stretch" MouseMove="PaintCanvas_MouseMove" UseCustomCursor="True" Cursor="Pen"/>
+        <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,10,290,100"/>
         <RichTextBox x:Name="ChatBox" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="710,10,10,130" IsReadOnly="True">
             <RichTextBox.Resources>
                 <Style TargetType="{x:Type Paragraph}">
@@ -34,10 +34,8 @@
             </TextBlock.Style>
         </TextBlock>
         <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="710,340,10,100"/>
-        <TextBox x:Name="ClientsBox" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,10,850,100" TextWrapping="Wrap" IsReadOnly="True"/>
-        <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,10,850,100"/>
 
-        <ComboBox x:Name="ColorComboBox" Margin="150,376,290,60" SelectionChanged="ComboColors_SelectionChanged">
+        <ComboBox x:Name="ColorComboBox" Margin="10,376,290,60" SelectionChanged="ComboColors_SelectionChanged">
             <ComboBox.ItemsPanel>
                 <ItemsPanelTemplate>
                     <Grid Loaded="table_Loaded" />
@@ -52,11 +50,11 @@
                 </DataTemplate>
             </ComboBox.ItemTemplate>
         </ComboBox>
-        <ComboBox x:Name="ToolsComboBox" Margin="250,410,650,20" SelectedIndex="0" FontSize="16" VerticalContentAlignment="Center" SelectionChanged="ToolsComboBox_SelectionChanged">
+        <ComboBox x:Name="ToolsComboBox" Margin="150,410,750,20" SelectedIndex="0" FontSize="16" VerticalContentAlignment="Center" SelectionChanged="ToolsComboBox_SelectionChanged">
             <ComboBoxItem Content="Pen"/>
             <ComboBoxItem Content="Eraser"/>
         </ComboBox>
-        <Button x:Name="ClearButton" Content="Clear Canvas"  Margin="150,410,750,20" Click="ClearButton_Click"/>
-        <Label x:Name="ItemToDrawLabel" Margin="360,410,290,20" FontSize="16" Content="Drawing: " FontWeight="Bold"/>
+        <Button x:Name="ClearButton" Content="Clear Canvas"  Margin="10,410,850,20" Click="ClearButton_Click"/>
+        <Label x:Name="ItemToDrawLabel" Margin="260,410,290,20" FontSize="16" Content="Drawing: " FontWeight="Bold"/>
     </Grid>
 </Window>
