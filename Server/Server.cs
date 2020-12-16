@@ -18,6 +18,8 @@ namespace Server
 		private List<ConnectedClient> connectedClients = new List<ConnectedClient>();
 		private List<ConnectedClient> pictionaryLobby = new List<ConnectedClient>();
 
+		//Change this to suit the path for your server
+		private string pictionaryTxtPath = "F:/Projects/Chat-Facility/Server/PictionaryWords.txt";
 		private int maxClients;
 		private bool playingPictionary;
 		private string pictionaryCurrentWordBeingDrawn;
@@ -253,7 +255,7 @@ namespace Server
 		private void StartPictionaryRound()
 		{
 			playingPictionary = true;
-			string[] pictionaryWordList = PictionaryWordsFromTextFile("F:/Projects/Chat-Facility/Server/PictionaryWords.txt");
+			string[] pictionaryWordList = PictionaryWordsFromTextFile(pictionaryTxtPath);
 
 			if (pictionaryWordList == null)
 			{
