@@ -309,7 +309,7 @@ namespace Server
 
 		private void SendEncryptedPictionartChatPacket(string message)
 		{
-			foreach (ConnectedClient client in connectedClients)
+			foreach (ConnectedClient client in pictionaryLobby)
 			{
 				client.TcpSend(new Packets.PictionaryChatMessagePacket(client.EncryptString(message)));
 			}

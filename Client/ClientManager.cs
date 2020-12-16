@@ -100,6 +100,7 @@ namespace Client
 
 		public void PlayPictionary()
 		{
+			pictionaryForm = new PictionaryForm(this);
 			TcpSendDataToServer(new Packets.GameConnectionPacket(Packets.Packet.GameType.Pictionary));
 		}
 
